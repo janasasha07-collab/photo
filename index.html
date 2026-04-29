@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мои фото</title>
+    <!-- Библиотека для чтения Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 40px 10px; background: #f9f9f9; }
+        .warning-box { display: inline-block; background: #fff3cd; border: 2px solid #ffc107; border-radius: 12px; padding: 20px 25px; max-width: 450px; width: 90%; margin-bottom: 25px; font-weight: bold; font-size: 18px; color: #856404; }
+        .links-container { display: inline-block; max-width: 450px; width: 90%; text-align: left; margin: 0 auto; }
+        .link-item { background: white; border-radius: 8px; padding: 15px; margin: 10px 0; box-shadow: 0 2px 6px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        .link-name { font-size: 16px; font-weight: bold; color: #333; margin-bottom: 5px; }
+        .btn { display: inline-block; padding: 10px 20px; font-size: 15px; background: #4CAF50; color: white; text-decoration: none; border-radius: 6px; }
+        .btn:hover { background: #43a047; }
+        .divider { border: none; border-top: 1px solid #eee; margin: 20px 0; }
+        input, button { padding: 12px; font-size: 16px; margin: 5px; }
+        button { background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div id="form-block">
+        <h2>Введите пароль для получения фото</h2>
+        <input type="text" id="code" placeholder="Пароль" autofocus>
+        <br><br>
+        <button onclick="checkCode()">Получить фото</button>
+    </div>
+
+    <div id="result-block" style="display:none;">
+        <div class="warning-box">⚠️ Внимание!<br>Файлы Вы сможете скачать<br>в течение 14 дней!!!</div>
+        <div class="links-container">
+            <p style="font-size:16px; color:#555;">Доступные папки с вашими фотографиями:</p>
+            <div id="links-list"></div>
+            <hr class="divider">
+            <div style="text-align:center; margin-top:20px;">
+                <p>⭐ Оставьте, пожалуйста, ваш отзыв о нашей компании:</p>
+                <!-- ЗАМЕНИТЕ ССЫЛКУ НА СВОЮ -->
+                <a href="https://yandex.ru/profile/1679432297" target="_blank" style="display:inline-block;padding:12px 25px;background:#FFD700;color:#333;font-weight:bold;text-decoration:none;border-radius:8px;">Написать отзыв</a>
+            </div>
+        </div>
+        <p><a href="?" onclick="location.reload()">Ввести другой пароль</a></p>
+    </div>
+
+    <script>
+        // ⚠️ СЮДА ВСТАВЬТЕ ССЫЛКУ НА ВАШ EXCEL-ФАЙЛ НА ЯНДЕКС.ДИСКЕ
+        const FILE_LINK = 'https://disk.yandex.ru/d/BfHeCamo-GDanw'; // пример
+
+        let csvData = [];   // массив строк (как csv, но данные из Excel)
+
+        // Получаем прямую ссылку на скачивание через API Яндекса
+        async function loadExcel() {
+            try {
+                const publicKey = FILE_LINK;
+                const apiUrl = `https://cloud-api.yandex.net/v1/disk/public/resources/download?public_key=${encodeURIComponent(publicKey)}`;
+                const resp = await fetch(apiUrl);
+                const data = await resp.json();
+                if (!data.href) throw new Error('Не удалось получить ссылку на скачивание');
+                
+                // Загружаем сам файл (бинарные данные)
+                const fileResp = await fetch(data.href);
+                const arrayBuffer = await fileResp.arrayBuffer();
+                
+                // Читаем Excel
+                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                
+                // Преобразуем в массив массивов (как CSV)
+                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+                csvData = rows;
+                console.log('Данные загружены', csvData);
+            } catch (err) {
+                console.error(err);
+                document.getElementById('form-block').innerHTML = '<p style="color:red;">Ошибка загрузки данных. Попробуйте позже.</p>';
+            }
+        }
+
+        loadExcel();
+
+        function checkCode() {
+            const code = document.getElementById('code').value.trim();
+            if (!code) return;
+            if (csvData.length === 0) {
+                alert('Данные ещё загружаются, подождите немного');
+                return;
+            }
+            // Первая строка — заголовки
+            for (let i = 1; i < csvData.length; i++) {
+                if (String(csvData[i][0]).trim() === code) {
+                    showResult(csvData[i], csvData[0]);
+                    return;
+                }
+            }
+            alert('Неверный пароль!');
+        }
+
+        function showResult(row, headers) {
+            document.getElementById('form-block').style.display = 'none';
+            document.getElementById('result-block').style.display = 'block';
+            const container = document.getElementById('links-list');
+            container.innerHTML = '';
+            let count = 0;
+            // Начинаем со столбца C (индекс 2)
+            for (let c = 2; c < row.length; c++) {
+                let link = String(row[c] || '').trim();
+                if (link && link.startsWith('http')) {
+                    count++;
+                    // Берём имя из заголовка
+                    let name = (headers[c] && String(headers[c]).trim() !== '') ? String(headers[c]).trim() : ('Папка ' + count);
+                    // Если в ссылке есть |
+                    if (link.includes('|')) {
+                        const parts = link.split('|');
+                        link = parts[0].trim();
+                        name = parts[1] ? parts[1].trim() : name;
+                    }
+                    container.innerHTML += `
+                        <div class="link-item">
+                            <div>
+                                <div class="link-name">${name}</div>
+                                <div style="font-size:13px; color:#888; word-break:break-all;">${link}</div>
+                            </div>
+                            <a class="btn" href="${link}" target="_blank">Перейти</a>
+                        </div>`;
+                }
+            }
+            if (count === 0) container.innerHTML = '<p>Нет загруженных папок.</p>';
+        }
+    </script>
+</body>
+</html>
