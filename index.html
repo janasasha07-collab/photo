@@ -30,17 +30,18 @@
             border: 2px solid #ffc107;
             border-radius: 12px;
             padding: 30px 25px;
-            width: 90%;
-            margin-bottom: 25px;
+            width: 87%;                  /* уменьшено на 3% */
+            margin: 0 auto 25px auto;    /* центрирование */
             font-weight: bold;
             font-size: 20px;
             color: #856404;
+            box-sizing: border-box;
         }
         .timer {
             font-size: 48px;
             font-weight: bold;
             color: #856404;
-            margin-top: 15px;
+            margin-bottom: 10px;
         }
         .links-container {
             display: inline-block;
@@ -127,17 +128,19 @@
                 <a href="tel:+79182969617" class="phone-link">+7 (918) 296-96-17 Полина</a>
             </div>
         </div>
-
-        <!-- Экран с предупреждением и таймером (появляется только при правильном пароле) -->
+        <!-- Экран с предупреждением и таймером -->
         <div id="warning-block" style="display:none;">
+            <!-- Таймер сверху -->
+            <div class="timer" id="countdown">5</div>
+            <p style="color:#856404; margin-bottom:20px;">Страница откроется автоматически</p>
+            
+            <!-- Плашка по центру -->
             <div class="warning-box">
                 ⚠️ Внимание!<br>Файлы Вы сможете скачать<br>в течение 14 дней!!!
             </div>
-            <div class="timer" id="countdown">5</div>
-            <p style="color:#856404;">Страница откроется автоматически</p>
         </div>
 
-        <!-- Страница со ссылками (без плашки 14 дней) -->
+        <!-- Страница со ссылками -->
         <div id="result-block" style="display:none;">
             <div class="links-container">
                 <p style="font-size:16px; color:#555;">Доступные папки с вашими фотографиями:</p>
@@ -190,7 +193,6 @@
             const code = document.getElementById('code').value.trim();
             if (!code) return;
 
-            // Обновляем данные из файла
             try {
                 const url = FILE_NAME + '?ts=' + new Date().getTime();
                 const response = await fetch(url);
@@ -206,7 +208,6 @@
                 return;
             }
 
-            // Ищем пароль
             let found = false;
             for (let i = 1; i < csvData.length; i++) {
                 if (String(csvData[i][0]).trim() === code) {
@@ -216,12 +217,11 @@
                     break;
                 }
             }
-
             if (!found) {
                 alert('Неверный пароль!');
                 return;
             }
-            // Показываем экран с таймером
+
             showWarningScreen();
         }
 
