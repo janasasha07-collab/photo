@@ -11,7 +11,7 @@
             text-align: center;
             margin: 0;
             padding: 40px 10px;
-            background: #f2f4f8; /* светлый фон */
+            background: #f2f4f8;
         }
         .container {
             max-width: 500px;
@@ -20,6 +20,9 @@
         .logo {
             max-width: 120px;
             margin-bottom: 20px;
+            border: none;
+            outline: none;
+            display: inline-block;
         }
         .warning-box {
             display: inline-block;
@@ -103,22 +106,32 @@
 </head>
 <body>
     <div class="container">
-        <!-- Логотип или фото (замените src на своё) -->
-        <img class="logo" src="logo1.png" alt="Логотип">
-
+        <!-- Страница ввода пароля -->
         <div id="form-block">
+            <!-- Логотип только здесь -->
+            <img class="logo" src="logo1.png" alt="Логотип" loading="eager" decoding="async">
+            
             <h2>Введите пароль для получения фото/видео файлов</h2>
             <input type="text" id="code" placeholder="Пароль" autofocus>
             <br>
             <button onclick="checkCode()">Получить ссылку</button>
+            
+            <!-- Контакты на странице пароля -->
+            <hr class="divider" style="margin-top:30px;">
+            <div style="text-align:center; margin-top:15px;">
+                <p style="font-size:16px; color:#555;">Телефон для связи и бронирования:</p>
+                <a href="tel:+79182969617" class="phone-link">+7 (918) 296-96-17 Полина</a>
+            </div>
         </div>
 
+        <!-- Страница со ссылками (без логотипа, но с контактами) -->
         <div id="result-block" style="display:none;">
             <div class="warning-box">⚠️ Внимание!<br>Файлы Вы сможете скачать<br>в течение 14 дней!!!</div>
             <div class="links-container">
-                <p style="font-size:16px; color:#555;">Доступные папки:</p>
+                <p style="font-size:16px; color:#555;">Доступные папки с вашими фото/видео:</p>
                 <div id="links-list"></div>
 
+                <!-- Контакты на странице ссылок -->
                 <hr class="divider">
                 <div style="text-align:center; margin-top:15px;">
                     <p style="font-size:16px; color:#555;">Телефон для связи:</p>
@@ -138,11 +151,9 @@
     </div>
 
     <script>
-        // Имя файла в репозитории
         const FILE_NAME = 'ФОТО дрон яндекс ссылки.xlsx';
         let csvData = [];
 
-        // Загружаем файл при старте
         async function loadExcel() {
             try {
                 const url = FILE_NAME + '?ts=' + new Date().getTime();
@@ -166,7 +177,6 @@
             const code = document.getElementById('code').value.trim();
             if (!code) return;
 
-            // Перед проверкой обновляем данные из файла
             try {
                 const url = FILE_NAME + '?ts=' + new Date().getTime();
                 const response = await fetch(url);
@@ -182,7 +192,6 @@
                 return;
             }
 
-            // Ищем пароль в обновлённых данных
             for (let i = 1; i < csvData.length; i++) {
                 if (String(csvData[i][0]).trim() === code) {
                     showResult(csvData[i], csvData[0]);
@@ -211,7 +220,7 @@
                     container.innerHTML += `
                         <div class="link-item">
                             <div>
-                            <div class="link-name">${name}</div>
+                                <div class="link-name">${name}</div>
                                 <div style="font-size:13px; color:#888; word-break:break-all;">${link}</div>
                             </div>
                             <a class="btn" href="${link}" target="_blank">Перейти</a>
