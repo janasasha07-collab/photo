@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Мои фото</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js">
+    </script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; margin: 40px 10px; background: #f9f9f9; }
         .warning-box { display: inline-block; background: #fff3cd; border: 2px solid #ffc107; border-radius: 12px; padding: 20px 25px; max-width: 450px; width: 90%; margin-bottom: 25px; font-weight: bold; font-size: 18px; color: #856404; }
@@ -35,19 +36,17 @@
             <div style="text-align:center; margin-top:20px;">
                 <p>⭐ Оставьте, пожалуйста, ваш отзыв о нашей компании:</p>
                 <!-- ЗАМЕНИТЕ ССЫЛКУ НА СВОЮ -->
-                <a href="https://yandex.ru/profile/1679432297" target="_blank" style="display:inline-block;padding:12px 25px;background:#FFD700;color:#333;font-weight:bold;text-decoration:none;border-radius:8px;">Написать отзыв</a>
+                <a href="https://yandex.ru/maps/org/.../reviews" target="_blank" style="display:inline-block;padding:12px 25px;background:#FFD700;color:#333;font-weight:bold;text-decoration:none;border-radius:8px;">Написать отзыв</a>
             </div>
         </div>
         <p><a href="?" onclick="location.reload()">Ввести другой пароль</a></p>
     </div>
 
     <script>
-        // Имя вашего Excel-файла в репозитории
-        const FILE_NAME = 'data.xlsx';   // Убедитесь, что имя совпадает
-
+        const FILE_NAME = 'data.xlsx';   // Проверьте имя вашего файла в репозитории
         let csvData = [];
 
-        // Функция загрузки файла (с временной меткой, чтобы избежать кэша)
+        // Загружаем файл при старте
         async function loadExcel() {
             try {
                 const url = FILE_NAME + '?ts=' + new Date().getTime();
@@ -57,45 +56,44 @@
                 const workbook = XLSX.read(arrayBuffer, { type: 'array' });
                 const sheetName = workbook.SheetNames[0];
                 const sheet = workbook.Sheets[sheetName];
-                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-                csvData = rows;
+                csvData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
                 console.log('Данные загружены', csvData);
-                document.getElementById('form-block').innerHTML = `
-                    <h2>Введите пароль для получения фото</h2>
-                    <input type="text" id="code" placeholder="Пароль" autofocus>
-                    <br><br>
-                    <button onclick="checkCode()">Получить фото</button>`;
             } catch (err) {
                 console.error(err);
                 document.getElementById('form-block').innerHTML = '<p style="color:red;">Ошибка загрузки данных. Попробуйте позже.</p>';
             }
         }
 
-        // Первоначальная загрузка
         loadExcel();
 
-        function checkCode() {
+        async function checkCode() {
             const code = document.getElementById('code').value.trim();
             if (!code) return;
-            // Показываем кнопку загрузки, чтобы интерфейс не завис
-            document.getElementById('form-block').innerHTML = '<p>Загрузка данных...</p>';
 
-            // Загружаем свежий Excel и затем ищем пароль
-            loadExcel().then(() => {
-                for (let i = 1; i < csvData.length; i++) {
-                    if (String(csvData[i][0]).trim() === code) {
-                        showResult(csvData[i], csvData[0]);
-                        return;
-                    }
+            // Перед проверкой обновляем данные из файла (кэш-брейкер)
+            try {
+                const url = FILE_NAME + '?ts=' + new Date().getTime();
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Файл не найден');
+                const arrayBuffer = await response.arrayBuffer();
+                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                csvData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+            } catch (err) {
+                console.error(err);
+                alert('Не удалось загрузить свежие данные. Проверьте соединение.');
+                return;
+            }
+
+            // Ищем пароль в обновлённых данных
+            for (let i = 1; i < csvData.length; i++) {
+                if (String(csvData[i][0]).trim() === code) {
+                    showResult(csvData[i], csvData[0]);
+                    return;
                 }
-                alert('Неверный пароль!');
-                // Восстанавливаем форму
-                document.getElementById('form-block').innerHTML = `
-                    <h2>Введите пароль для получения фото</h2>
-                    <input type="text" id="code" placeholder="Пароль" autofocus>
-                    <br><br>
-                    <button onclick="checkCode()">Получить фото</button>`;
-            });
+            }
+            alert('Неверный пароль!');
         }
 
         function showResult(row, headers) {
