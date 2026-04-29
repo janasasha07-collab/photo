@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Мои фото</title>
-    <!-- Библиотека для чтения Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; margin: 40px 10px; background: #f9f9f9; }
@@ -36,37 +35,28 @@
             <div style="text-align:center; margin-top:20px;">
                 <p>⭐ Оставьте, пожалуйста, ваш отзыв о нашей компании:</p>
                 <!-- ЗАМЕНИТЕ ССЫЛКУ НА СВОЮ -->
-                <a href="https://yandex.ru/profile/1679432297" target="_blank" style="display:inline-block;padding:12px 25px;background:#FFD700;color:#333;font-weight:bold;text-decoration:none;border-radius:8px;">Написать отзыв</a>
+                <a href="https://yandex.ru/profile/1679432297"_blank" style="display:inline-block;padding:12px 25px;background:#FFD700;color:#333;font-weight:bold;text-decoration:none;border-radius:8px;">Написать отзыв</a>
             </div>
         </div>
         <p><a href="?" onclick="location.reload()">Ввести другой пароль</a></p>
     </div>
 
     <script>
-        // ⚠️ СЮДА ВСТАВЬТЕ ССЫЛКУ НА ВАШ EXCEL-ФАЙЛ НА ЯНДЕКС.ДИСКЕ
-        const FILE_LINK = 'https://disk.yandex.ru/d/BfHeCamo-GDanw'; // пример
+        // Имя вашего Excel-файла в репозитории (лежит рядом с index.html)
+        const FILE_NAME = 'ФОТО дрон яндекс ссылки.xlsx';   // ⚠️ Убедитесь, что имя совпадает с загруженным файлом!
 
-        let csvData = [];   // массив строк (как csv, но данные из Excel)
+        let csvData = [];
 
-        // Получаем прямую ссылку на скачивание через API Яндекса
+        // Загружаем Excel напрямую с этого же сайта
         async function loadExcel() {
             try {
-                const publicKey = FILE_LINK;
-                const apiUrl = `https://cloud-api.yandex.net/v1/disk/public/resources/download?public_key=${encodeURIComponent(publicKey)}`;
-                const resp = await fetch(apiUrl);
-                const data = await resp.json();
-                if (!data.href) throw new Error('Не удалось получить ссылку на скачивание');
-                
-                // Загружаем сам файл (бинарные данные)
-                const fileResp = await fetch(data.href);
-                const arrayBuffer = await fileResp.arrayBuffer();
-                
-                // Читаем Excel
+                const response = await fetch(FILE_NAME);
+                if (!response.ok) throw new Error('Файл не найден или недоступен');
+                const arrayBuffer = await response.arrayBuffer();
                 const workbook = XLSX.read(arrayBuffer, { type: 'array' });
                 const sheetName = workbook.SheetNames[0];
                 const sheet = workbook.Sheets[sheetName];
-                
-                // Преобразуем в массив массивов (как CSV)
+                // Преобразуем в массив массивов
                 const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
                 csvData = rows;
                 console.log('Данные загружены', csvData);
@@ -101,14 +91,14 @@
             const container = document.getElementById('links-list');
             container.innerHTML = '';
             let count = 0;
-            // Начинаем со столбца C (индекс 2)
+            // Столбцы начиная с C (индекс 2)
             for (let c = 2; c < row.length; c++) {
                 let link = String(row[c] || '').trim();
                 if (link && link.startsWith('http')) {
                     count++;
-                    // Берём имя из заголовка
+                    // Имя папки из заголовка
                     let name = (headers[c] && String(headers[c]).trim() !== '') ? String(headers[c]).trim() : ('Папка ' + count);
-                    // Если в ссылке есть |
+                    // Если в ссылке указано имя через |
                     if (link.includes('|')) {
                         const parts = link.split('|');
                         link = parts[0].trim();
