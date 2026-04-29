@@ -35,54 +35,67 @@
             <div style="text-align:center; margin-top:20px;">
                 <p>⭐ Оставьте, пожалуйста, ваш отзыв о нашей компании:</p>
                 <!-- ЗАМЕНИТЕ ССЫЛКУ НА СВОЮ -->
-                <a href="https://yandex.ru/profile/1679432297"_blank" style="display:inline-block;padding:12px 25px;background:#FFD700;color:#333;font-weight:bold;text-decoration:none;border-radius:8px;">Написать отзыв</a>
+                <a href="https://yandex.ru/profile/1679432297" target="_blank" style="display:inline-block;padding:12px 25px;background:#FFD700;color:#333;font-weight:bold;text-decoration:none;border-radius:8px;">Написать отзыв</a>
             </div>
         </div>
         <p><a href="?" onclick="location.reload()">Ввести другой пароль</a></p>
     </div>
 
     <script>
-        // Имя вашего Excel-файла в репозитории (лежит рядом с index.html)
-        const FILE_NAME = 'ФОТО дрон яндекс ссылки.xlsx';   // ⚠️ Убедитесь, что имя совпадает с загруженным файлом!
+        // Имя вашего Excel-файла в репозитории
+        const FILE_NAME = 'data.xlsx';   // Убедитесь, что имя совпадает
 
         let csvData = [];
 
-        // Загружаем Excel напрямую с этого же сайта
+        // Функция загрузки файла (с временной меткой, чтобы избежать кэша)
         async function loadExcel() {
             try {
-                const response = await fetch(FILE_NAME);
-                if (!response.ok) throw new Error('Файл не найден или недоступен');
+                const url = FILE_NAME + '?ts=' + new Date().getTime();
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Файл не найден');
                 const arrayBuffer = await response.arrayBuffer();
                 const workbook = XLSX.read(arrayBuffer, { type: 'array' });
                 const sheetName = workbook.SheetNames[0];
                 const sheet = workbook.Sheets[sheetName];
-                // Преобразуем в массив массивов
                 const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
                 csvData = rows;
                 console.log('Данные загружены', csvData);
+                document.getElementById('form-block').innerHTML = `
+                    <h2>Введите пароль для получения фото</h2>
+                    <input type="text" id="code" placeholder="Пароль" autofocus>
+                    <br><br>
+                    <button onclick="checkCode()">Получить фото</button>`;
             } catch (err) {
                 console.error(err);
                 document.getElementById('form-block').innerHTML = '<p style="color:red;">Ошибка загрузки данных. Попробуйте позже.</p>';
             }
         }
 
+        // Первоначальная загрузка
         loadExcel();
 
         function checkCode() {
             const code = document.getElementById('code').value.trim();
             if (!code) return;
-            if (csvData.length === 0) {
-                alert('Данные ещё загружаются, подождите немного');
-                return;
-            }
-            // Первая строка — заголовки
-            for (let i = 1; i < csvData.length; i++) {
-                if (String(csvData[i][0]).trim() === code) {
-                    showResult(csvData[i], csvData[0]);
-                    return;
+            // Показываем кнопку загрузки, чтобы интерфейс не завис
+            document.getElementById('form-block').innerHTML = '<p>Загрузка данных...</p>';
+
+            // Загружаем свежий Excel и затем ищем пароль
+            loadExcel().then(() => {
+                for (let i = 1; i < csvData.length; i++) {
+                    if (String(csvData[i][0]).trim() === code) {
+                        showResult(csvData[i], csvData[0]);
+                        return;
+                    }
                 }
-            }
-            alert('Неверный пароль!');
+                alert('Неверный пароль!');
+                // Восстанавливаем форму
+                document.getElementById('form-block').innerHTML = `
+                    <h2>Введите пароль для получения фото</h2>
+                    <input type="text" id="code" placeholder="Пароль" autofocus>
+                    <br><br>
+                    <button onclick="checkCode()">Получить фото</button>`;
+            });
         }
 
         function showResult(row, headers) {
@@ -91,14 +104,11 @@
             const container = document.getElementById('links-list');
             container.innerHTML = '';
             let count = 0;
-            // Столбцы начиная с C (индекс 2)
             for (let c = 2; c < row.length; c++) {
                 let link = String(row[c] || '').trim();
                 if (link && link.startsWith('http')) {
                     count++;
-                    // Имя папки из заголовка
                     let name = (headers[c] && String(headers[c]).trim() !== '') ? String(headers[c]).trim() : ('Папка ' + count);
-                    // Если в ссылке указано имя через |
                     if (link.includes('|')) {
                         const parts = link.split('|');
                         link = parts[0].trim();
