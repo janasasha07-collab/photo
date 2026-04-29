@@ -29,12 +29,18 @@
             background: #fff3cd;
             border: 2px solid #ffc107;
             border-radius: 12px;
-            padding: 20px 25px;
+            padding: 30px 25px;
             width: 90%;
             margin-bottom: 25px;
             font-weight: bold;
-            font-size: 18px;
+            font-size: 20px;
             color: #856404;
+        }
+        .timer {
+            font-size: 48px;
+            font-weight: bold;
+            color: #856404;
+            margin-top: 15px;
         }
         .links-container {
             display: inline-block;
@@ -108,7 +114,6 @@
     <div class="container">
         <!-- Страница ввода пароля -->
         <div id="form-block">
-            <!-- Логотип только здесь -->
             <img class="logo" src="logo1.png" alt="Логотип" loading="eager" decoding="async">
             
             <h2>Введите пароль для получения фото/видео файлов</h2>
@@ -116,25 +121,31 @@
             <br>
             <button onclick="checkCode()">Получить ссылку</button>
             
-            <!-- Контакты на странице пароля -->
             <hr class="divider" style="margin-top:30px;">
             <div style="text-align:center; margin-top:15px;">
-                <p style="font-size:16px; color:#555;">Телефон для связи и бронирования:</p>
+                <p style="font-size:16px; color:#555;">Номер для связи и бронирования:</p>
                 <a href="tel:+79182969617" class="phone-link">+7 (918) 296-96-17 Полина</a>
             </div>
         </div>
 
-        <!-- Страница со ссылками (без логотипа, но с контактами) -->
+        <!-- Экран с предупреждением и таймером (появляется только при правильном пароле) -->
+        <div id="warning-block" style="display:none;">
+            <div class="warning-box">
+                ⚠️ Внимание!<br>Файлы Вы сможете скачать<br>в течение 14 дней!!!
+            </div>
+            <div class="timer" id="countdown">5</div>
+            <p style="color:#856404;">Страница откроется автоматически</p>
+        </div>
+
+        <!-- Страница со ссылками (без плашки 14 дней) -->
         <div id="result-block" style="display:none;">
-            <div class="warning-box">⚠️ Внимание!<br>Файлы Вы сможете скачать<br>в течение 14 дней!!!</div>
             <div class="links-container">
-                <p style="font-size:16px; color:#555;">Доступные папки с вашими фото/видео:</p>
+                <p style="font-size:16px; color:#555;">Доступные папки с вашими фотографиями:</p>
                 <div id="links-list"></div>
 
-                <!-- Контакты на странице ссылок -->
                 <hr class="divider">
                 <div style="text-align:center; margin-top:15px;">
-                    <p style="font-size:16px; color:#555;">Телефон для связи:</p>
+                    <p style="font-size:16px; color:#555;">Номер для связи и бронирования:</p>
                     <a href="tel:+79182969617" class="phone-link">+7 (918) 296-96-17 Полина</a>
                 </div>
 
@@ -153,6 +164,8 @@
     <script>
         const FILE_NAME = 'ФОТО дрон яндекс ссылки.xlsx';
         let csvData = [];
+        let foundRow = null;
+        let foundHeaders = null;
 
         async function loadExcel() {
             try {
@@ -177,6 +190,7 @@
             const code = document.getElementById('code').value.trim();
             if (!code) return;
 
+            // Обновляем данные из файла
             try {
                 const url = FILE_NAME + '?ts=' + new Date().getTime();
                 const response = await fetch(url);
@@ -192,21 +206,55 @@
                 return;
             }
 
+            // Ищем пароль
+            let found = false;
             for (let i = 1; i < csvData.length; i++) {
                 if (String(csvData[i][0]).trim() === code) {
-                    showResult(csvData[i], csvData[0]);
-                    return;
+                    foundRow = csvData[i];
+                    foundHeaders = csvData[0];
+                    found = true;
+                    break;
                 }
             }
-            alert('Неверный пароль!');
+
+            if (!found) {
+                alert('Неверный пароль!');
+                return;
+            }
+            // Показываем экран с таймером
+            showWarningScreen();
         }
 
-        function showResult(row, headers) {
+        function showWarningScreen() {
             document.getElementById('form-block').style.display = 'none';
+            document.getElementById('warning-block').style.display = 'block';
+            document.getElementById('result-block').style.display = 'none';
+
+            let seconds = 5;
+            const countdownEl = document.getElementById('countdown');
+            countdownEl.textContent = seconds;
+
+            const timer = setInterval(() => {
+                seconds--;
+                countdownEl.textContent = seconds;
+                if (seconds <= 0) {
+                    clearInterval(timer);
+                    showResult();
+                }
+            }, 1000);
+        }
+
+        function showResult() {
+            document.getElementById('form-block').style.display = 'none';
+            document.getElementById('warning-block').style.display = 'none';
             document.getElementById('result-block').style.display = 'block';
+
             const container = document.getElementById('links-list');
             container.innerHTML = '';
             let count = 0;
+            const row = foundRow;
+            const headers = foundHeaders;
+
             for (let c = 2; c < row.length; c++) {
                 let link = String(row[c] || '').trim();
                 if (link && link.startsWith('http')) {
