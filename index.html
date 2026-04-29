@@ -4,46 +4,142 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Мои фото</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js">
-    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin: 40px 10px; background: #f9f9f9; }
-        .warning-box { display: inline-block; background: #fff3cd; border: 2px solid #ffc107; border-radius: 12px; padding: 20px 25px; max-width: 450px; width: 90%; margin-bottom: 25px; font-weight: bold; font-size: 18px; color: #856404; }
-        .links-container { display: inline-block; max-width: 450px; width: 90%; text-align: left; margin: 0 auto; }
-        .link-item { background: white; border-radius: 8px; padding: 15px; margin: 10px 0; box-shadow: 0 2px 6px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
-        .link-name { font-size: 16px; font-weight: bold; color: #333; margin-bottom: 5px; }
-        .btn { display: inline-block; padding: 10px 20px; font-size: 15px; background: #4CAF50; color: white; text-decoration: none; border-radius: 6px; }
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 40px 10px;
+            background: #f2f4f8; /* светлый фон */
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .logo {
+            max-width: 120px;
+            margin-bottom: 20px;
+        }
+        .warning-box {
+            display: inline-block;
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 12px;
+            padding: 20px 25px;
+            width: 90%;
+            margin-bottom: 25px;
+            font-weight: bold;
+            font-size: 18px;
+            color: #856404;
+        }
+        .links-container {
+            display: inline-block;
+            max-width: 450px;
+            width: 90%;
+            text-align: left;
+            margin: 0 auto;
+        }
+        .link-item {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .link-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 15px;
+            background: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+        }
         .btn:hover { background: #43a047; }
-        .divider { border: none; border-top: 1px solid #eee; margin: 20px 0; }
-        input, button { padding: 12px; font-size: 16px; margin: 5px; }
-        button { background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .divider {
+            border: none;
+            border-top: 1px solid #ddd;
+            margin: 20px 0;
+        }
+        input {
+            padding: 12px;
+            font-size: 16px;
+            width: 80%;
+            max-width: 300px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 12px 30px;
+            font-size: 16px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover { background: #43a047; }
+        .phone-link {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            text-decoration: none;
+        }
+        .phone-link:hover { color: #4CAF50; }
     </style>
 </head>
 <body>
-    <div id="form-block">
-        <h2>Введите пароль для получения фото</h2>
-        <input type="text" id="code" placeholder="Пароль" autofocus>
-        <br><br>
-        <button onclick="checkCode()">Получить фото</button>
-    </div>
+    <div class="container">
+        <!-- Логотип или фото (замените src на своё) -->
+        <img class="logo" src="logo.png" alt="Логотип">
 
-    <div id="result-block" style="display:none;">
-        <div class="warning-box">⚠️ Внимание!<br>Файлы Вы сможете скачать<br>в течение 14 дней!!!</div>
-        <div class="links-container">
-            <p style="font-size:16px; color:#555;">Доступные папки с вашими фотографиями:</p>
-            <div id="links-list"></div>
-            <hr class="divider">
-            <div style="text-align:center; margin-top:20px;">
-                <p>⭐ Оставьте, пожалуйста, ваш отзыв о нашей компании:</p>
-                <!-- ЗАМЕНИТЕ ССЫЛКУ НА СВОЮ -->
-                <a href="https://yandex.ru/profile/1679432297" target="_blank" style="display:inline-block;padding:12px 25px;background:#FFD700;color:#333;font-weight:bold;text-decoration:none;border-radius:8px;">Написать отзыв</a>
-            </div>
+        <div id="form-block">
+            <h2>Введите пароль для получения фото/видео файлов</h2>
+            <input type="text" id="code" placeholder="Пароль" autofocus>
+            <br>
+            <button onclick="checkCode()">Получить ссылку</button>
         </div>
-        <p><a href="?" onclick="location.reload()">Ввести другой пароль</a></p>
+
+        <div id="result-block" style="display:none;">
+            <div class="warning-box">⚠️ Внимание!<br>Файлы Вы сможете скачать<br>в течение 14 дней!!!</div>
+            <div class="links-container">
+                <p style="font-size:16px; color:#555;">Доступные папки с вашими фотографиями:</p>
+                <div id="links-list"></div>
+
+                <hr class="divider">
+                <div style="text-align:center; margin-top:15px;">
+                    <p style="font-size:16px; color:#555;">По всем вопросам звоните:</p>
+                    <a href="tel:+79182969617" class="phone-link">+7 (918) 296-96-17 Полина</a>
+                </div>
+
+                <hr class="divider">
+                <div style="text-align:center; margin-top:20px;">
+                    <p>⭐ Оставьте, пожалуйста, ваш отзыв о нашей компании:</p>
+                    <a href="https://yandex.ru/profile/1679432297" target="_blank" style="display:inline-block;padding:12px 25px;background:#FFD700;color:#333;font-weight:bold;text-decoration:none;border-radius:8px;">Написать отзыв</a>
+                </div>
+            </div>
+            <p style="margin-top:25px;">
+                <a href="?" onclick="location.reload()" style="color:#4CAF50;">Ввести другой пароль</a>
+            </p>
+        </div>
     </div>
 
     <script>
-        const FILE_NAME = 'ФОТО дрон яндекс ссылки.xlsx';   // Проверьте имя вашего файла в репозитории
+        // Имя файла в репозитории
+        const FILE_NAME = 'ФОТО дрон яндекс ссылки.xlsx';
         let csvData = [];
 
         // Загружаем файл при старте
@@ -70,7 +166,7 @@
             const code = document.getElementById('code').value.trim();
             if (!code) return;
 
-            // Перед проверкой обновляем данные из файла (кэш-брейкер)
+            // Перед проверкой обновляем данные из файла
             try {
                 const url = FILE_NAME + '?ts=' + new Date().getTime();
                 const response = await fetch(url);
@@ -115,7 +211,7 @@
                     container.innerHTML += `
                         <div class="link-item">
                             <div>
-                                <div class="link-name">${name}</div>
+                            <div class="link-name">${name}</div>
                                 <div style="font-size:13px; color:#888; word-break:break-all;">${link}</div>
                             </div>
                             <a class="btn" href="${link}" target="_blank">Перейти</a>
