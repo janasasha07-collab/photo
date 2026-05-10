@@ -267,31 +267,26 @@
     showResult(allItems, matchedRows.length > 1);
 }
 
-        function showResult(row, headers) {
-            document.getElementById('form-block').style.display = 'none';
-            document.getElementById('result-block').style.display = 'block';
-            const container = document.getElementById('links-list');
-            container.innerHTML = '';
-            let count = 0;
-            for (let c = 2; c < row.length; c++) {
-                let link = String(row[c] || '').trim();
-                if (link && link.startsWith('http')) {
-                    count++;
-                    let name = (headers[c] && String(headers[c]).trim() !== '') ? String(headers[c]).trim() : ('Папка ' + count);
-                    if (link.includes('|')) {
-                        const parts = link.split('|');
-                        link = parts[0].trim();
-                        name = parts[1] ? parts[1].trim() : name;
-                    }
-                    container.innerHTML += `
-                        <div class="link-item">
-                            <div>
-                                <div class="link-name">${name}</div>
-                                <div style="font-size:13px; color:#888; word-break:break-all;">${link}</div>
-                            </div>
-                            <a class="btn" href="${link}" target="_blank">Перейти</a>
-                        </div>`;
-                }
+       function showResult(items, isMerged) {
+    document.getElementById('form-block').style.display = 'none';
+    document.getElementById('result-block').style.display = 'block';
+
+    // Показываем или скрываем предупреждение об объединении
+    document.getElementById('merge-warning').style.display = isMerged ? 'block' : 'none';
+
+    const container = document.getElementById('links-list');
+    container.innerHTML = '';
+    for (const item of items) {
+        container.innerHTML += `
+            <div class="link-item">
+                <div>
+                    <div class="link-name">${item.name}</div>
+                    <div style="font-size:13px; color:#888; word-break:break-all;">${item.link}</div>
+                </div>
+                <a class="btn" href="${item.link}" target="_blank">Перейти</a>
+            </div>`;
+    }
+}
             }
             if (count === 0) container.innerHTML = '<p>Нет загруженных папок.</p>';
         }
