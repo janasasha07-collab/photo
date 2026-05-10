@@ -101,6 +101,14 @@
             text-decoration: none;
         }
         .phone-link:hover { color: #4CAF50; }
+    .info-text {
+    color: #856404;
+    background: #fff3cd;
+    border-radius: 8px;
+    padding: 10px;
+    margin: 15px 0;
+    font-size: 14px;
+}
     </style>
 </head>
 <body>
@@ -139,6 +147,10 @@
                 <div class="red-warning" style="font-size:22px; margin-bottom:5px;">ВНИМАНИЕ!!!</div>
                 <div class="red-warning" style="font-size:18px; margin-bottom:5px;">Доступ к файлам</div>
                 <div class="red-warning" style="font-size:18px; margin-bottom:25px;">открыт на 14 дней</div>
+
+                <div id="merge-warning" class="info-text" style="display:none;">
+    ℹ️ Найдено несколько заказов с одинаковым паролем. Все доступные материалы объединены.
+</div>
                 
                 <div id="links-list"></div>
 
@@ -191,32 +203,69 @@
         loadExcel();
 
         async function checkCode() {
-            const code = document.getElementById('code').value.trim();
-            if (!code) return;
+    const code = document.getElementById('code').value.trim();
+    if (!code) return;
 
-            try {
-                const url = FILE_NAME + '?ts=' + new Date().getTime();
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('Файл не найден');
-                const arrayBuffer = await response.arrayBuffer();
-                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-                const sheetName = workbook.SheetNames[0];
-                const sheet = workbook.Sheets[sheetName];
-                csvData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-            } catch (err) {
-                console.error(err);
-                alert('Не удалось загрузить свежие данные. Проверьте соединение.');
-                return;
-            }
+    // Обновляем данные из файла
+    try {
+        const url = FILE_NAME + '?ts=' + new Date().getTime();
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Файл не найден');
+        const arrayBuffer = await response.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        csvData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+    } catch (err) {
+        console.error(err);
+        alert('Не удалось загрузить свежие данные. Проверьте соединение.');
+        return;
+    }
 
-            for (let i = 1; i < csvData.length; i++) {
-                if (String(csvData[i][0]).trim() === code) {
-                    showResult(csvData[i], csvData[0]);
-                    return;
-                }
-            }
-            alert('Неверный пароль!');
+    // Ищем ВСЕ строки с таким паролем
+    const matchedRows = [];
+    for (let i = 1; i < csvData.length; i++) {
+        if (String(csvData[i][0]).trim() === code) {
+            matchedRows.push(csvData[i]);
         }
+    }
+
+    if (matchedRows.length === 0) {
+        alert('Неверный пароль!');
+        return;
+    }
+
+    // Собираем ссылки из всех найденных строк, исключая дубликаты
+    const allItems = [];
+    const seenLinks = new Set();
+
+    for (const row of matchedRows) {
+        for (let c = 2; c < row.length; c++) {
+            let link = String(row[c] || '').trim();
+            if (link && link.startsWith('http')) {
+                if (seenLinks.has(link)) continue;   // пропускаем дубликаты
+                seenLinks.add(link);
+
+                let name = (csvData[0][c] && String(csvData[0][c]).trim() !== '') ? String(csvData[0][c]).trim() : '';
+                if (link.includes('|')) {
+                    const parts = link.split('|');
+                    link = parts[0].trim();
+                    name = parts[1] ? parts[1].trim() : name;
+                }
+                if (!name) name = 'Папка ' + (allItems.length + 1);
+                allItems.push({ link: link, name: name });
+            }
+        }
+    }
+
+    if (allItems.length === 0) {
+        alert('Для этого пароля нет загруженных файлов.');
+        return;
+    }
+
+    // Показываем результат (если строк больше одной – флаг true)
+    showResult(allItems, matchedRows.length > 1);
+}
 
         function showResult(row, headers) {
             document.getElementById('form-block').style.display = 'none';
