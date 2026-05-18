@@ -176,143 +176,143 @@
     </div>
 
     <script>
-        const TELEGRAM_BOT_TOKEN = '8902714862:AAEvBp-yI5lf4VugHiE6AAvWb3bJRnAR95g';
-        const TELEGRAM_CHAT_ID = '2110007229';
+    const TELEGRAM_BOT_TOKEN = '8902714862:AAEvBp-yI5lf4VugHiE6AAvWb3bJRnAR95g';
+    const TELEGRAM_CHAT_ID = '2110007229';
 
-        const FILE_NAME = 'ФОТО дрон яндекс ссылки.xlsx';
-        let csvData = [];
+    const FILE_NAME = 'ФОТО дрон яндекс ссылки.xlsx';
+    let csvData = [];
 
-        function sendTelegramNotification(code, itemCount, eventType) {
-            if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
+    function sendTelegramNotification(code, itemCount, eventType) {
+        if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
 
-            let text = '';
-            const now = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
+        let text = '';
+        const now = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
 
-            if (eventType === 'Промо-ролик') {
-                text = `🎬 Клиент перешёл на промо-ролик\nВремя: ${now}`;
-            } else if (eventType === 'Яндекс') {
-                text = `⭐ Клиент перешёл на отзыв Яндекс\nВремя: ${now}`;
-            } else if (eventType === '2ГИС') {
-                text = `⭐ Клиент перешёл на отзыв 2ГИС\nВремя: ${now}`;
-            } else if (code) {
-                text = `🔔 Клиент вошёл\nПароль: ${code}\nВремя: ${now}\nНайдено услуг: ${itemCount}`;
-            }
-
-            if (!text) return;
-
-            const url = `https://telegram-bot-api.vercel.app/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(text)}`;
-            fetch(url).catch(err => console.error('Ошибка отправки в Telegram:', err));
+        if (eventType === 'Промо-ролик') {
+            text = `🎬 Клиент перешёл на промо-ролик\nВремя: ${now}`;
+        } else if (eventType === 'Яндекс') {
+            text = `⭐ Клиент перешёл на отзыв Яндекс\nВремя: ${now}`;
+        } else if (eventType === '2ГИС') {
+            text = `⭐ Клиент перешёл на отзыв 2ГИС\nВремя: ${now}`;
+        } else if (code) {
+            text = `🔔 Клиент вошёл\nПароль: ${code}\nВремя: ${now}\nНайдено услуг: ${itemCount}`;
         }
 
-        async function loadExcel() {
-            try {
-                const url = FILE_NAME + '?ts=' + new Date().getTime();
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('Файл не найден');
-                const arrayBuffer = await response.arrayBuffer();
-                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-                const sheetName = workbook.SheetNames[0];
-                const sheet = workbook.Sheets[sheetName];
-                csvData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-                console.log('Данные загружены', csvData);
-            } catch (err) {
-                console.error(err);
-                document.getElementById('form-block').innerHTML = '<p style="color:red;">Ошибка загрузки данных. Попробуйте позже.</p>';
+        if (!text) return;
+
+        const url = `https://tg-cors-proxy.deno.dev/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(text)}`;
+        fetch(url).catch(err => console.error('Ошибка отправки в Telegram:', err));
+    }
+
+    async function loadExcel() {
+        try {
+            const url = FILE_NAME + '?ts=' + new Date().getTime();
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Файл не найден');
+            const arrayBuffer = await response.arrayBuffer();
+            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            csvData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+            console.log('Данные загружены', csvData);
+        } catch (err) {
+            console.error(err);
+            document.getElementById('form-block').innerHTML = '<p style="color:red;">Ошибка загрузки данных. Попробуйте позже.</p>';
+        }
+    }
+
+    loadExcel();
+
+    async function checkCode() {
+        const code = document.getElementById('code').value.trim();
+        if (!code) return;
+
+        try {
+            const url = FILE_NAME + '?ts=' + new Date().getTime();
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Файл не найден');
+            const arrayBuffer = await response.arrayBuffer();
+            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            csvData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+        } catch (err) {
+            console.error(err);
+            alert('Не удалось загрузить свежие данные. Проверьте соединение.');
+            return;
+        }
+
+        const matchedRows = [];
+        for (let i = 1; i < csvData.length; i++) {
+            if (String(csvData[i][0]).trim() === code) {
+                matchedRows.push(csvData[i]);
             }
         }
 
-        loadExcel();
-
-        async function checkCode() {
-            const code = document.getElementById('code').value.trim();
-            if (!code) return;
-
-            try {
-                const url = FILE_NAME + '?ts=' + new Date().getTime();
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('Файл не найден');
-                const arrayBuffer = await response.arrayBuffer();
-                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-                const sheetName = workbook.SheetNames[0];
-                const sheet = workbook.Sheets[sheetName];
-                csvData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-            } catch (err) {
-                console.error(err);
-                alert('Не удалось загрузить свежие данные. Проверьте соединение.');
-                return;
+        const now = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
+        if (matchedRows.length === 0) {
+            if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
+                const text = `❌ Неверный пароль\nПароль: ${code}\nВремя: ${now}`;
+                const url = `https://tg-cors-proxy.deno.dev/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(text)}`;
+                fetch(url).catch(err => console.error(err));
             }
+            alert('Неверный пароль!');
+            return;
+        }
 
-            const matchedRows = [];
-            for (let i = 1; i < csvData.length; i++) {
-                if (String(csvData[i][0]).trim() === code) {
-                    matchedRows.push(csvData[i]);
-                }
-            }
+        const allItems = [];
+        const seenLinks = new Set();
 
-            const now = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
-            if (matchedRows.length === 0) {
-                if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
-                    const text = `❌ Неверный пароль\nПароль: ${code}\nВремя: ${now}`;
-                    const url = `https://telegram-bot-api.vercel.app/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(text)}`;
-                    fetch(url).catch(err => console.error(err));
-                }
-                alert('Неверный пароль!');
-                return;
-            }
+        for (const row of matchedRows) {
+            for (let c = 2; c < row.length; c++) {
+                let link = String(row[c] || '').trim();
+                if (!link || !link.startsWith('http')) continue;
 
-            const allItems = [];
-            const seenLinks = new Set();
-
-            for (const row of matchedRows) {
-                for (let c = 2; c < row.length; c++) {
-                    let link = String(row[c] || '').trim();
-                    if (!link || !link.startsWith('http')) continue;
-
-                    if (link.includes('|')) {
-                        const parts = link.split('|');
-                        link = parts[0].trim();
-                        const name = parts[1] ? parts[1].trim() : (csvData[0][c] ? String(csvData[0][c]).trim() : 'Папка ' + (allItems.length + 1));
-                        if (!seenLinks.has(link)) {
-                            seenLinks.add(link);
-                            allItems.push({ link, name });
-                        }
-                    } else {
-                        if (!seenLinks.has(link)) {
-                            seenLinks.add(link);
-                            const name = csvData[0][c] ? String(csvData[0][c]).trim() : ('Папка ' + (allItems.length + 1));
-                            allItems.push({ link, name });
-                        }
+                if (link.includes('|')) {
+                    const parts = link.split('|');
+                       link = parts[0].trim();
+                    const name = parts[1] ? parts[1].trim() : (csvData[0][c] ? String(csvData[0][c]).trim() : 'Папка ' + (allItems.length + 1));
+                    if (!seenLinks.has(link)) {
+                        seenLinks.add(link);
+                        allItems.push({ link, name });
+                    }
+                } else {
+                    if (!seenLinks.has(link)) {
+                        seenLinks.add(link);
+                        const name = csvData[0][c] ? String(csvData[0][c]).trim() : ('Папка ' + (allItems.length + 1));
+                        allItems.push({ link, name });
                     }
                 }
             }
-
-            if (allItems.length === 0) {
-                alert('Для этого пароля нет загруженных файлов.');
-                return;
-            }
-
-            sendTelegramNotification(code, allItems.length, 'success');
-            showResult(allItems, matchedRows.length > 1);
         }
 
-        function showResult(items, isMerged) {
-            document.getElementById('form-block').style.display = 'none';
-            document.getElementById('result-block').style.display = 'block';
-            document.getElementById('merge-warning').style.display = isMerged ? 'block' : 'none';
-
-            const container = document.getElementById('links-list');
-            container.innerHTML = '';
-            for (const item of items) {
-                container.innerHTML += `
-                    <div class="link-item">
-                        <div>
-                            <div class="link-name">${item.name}</div>
-                            <div style="font-size:13px; color:#888; word-break:break-all;">${item.link}</div>
-                        </div>
-                        <a class="btn" href="${item.link}" target="_blank">Перейти</a>
-                    </div>`;
-            }
+        if (allItems.length === 0) {
+            alert('Для этого пароля нет загруженных файлов.');
+            return;
         }
-    </script>
+
+        sendTelegramNotification(code, allItems.length, 'success');
+        showResult(allItems, matchedRows.length > 1);
+    }
+
+    function showResult(items, isMerged) {
+        document.getElementById('form-block').style.display = 'none';
+        document.getElementById('result-block').style.display = 'block';
+        document.getElementById('merge-warning').style.display = isMerged ? 'block' : 'none';
+
+        const container = document.getElementById('links-list');
+        container.innerHTML = '';
+        for (const item of items) {
+            container.innerHTML += `
+                <div class="link-item">
+                    <div>
+                        <div class="link-name">${item.name}</div>
+                        <div style="font-size:13px; color:#888; word-break:break-all;">${item.link}</div>
+                    </div>
+                    <a class="btn" href="${item.link}" target="_blank">Перейти</a>
+                </div>`;
+        }
+    }
+</script>
 </body>
 </html>
