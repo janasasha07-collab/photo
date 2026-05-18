@@ -176,14 +176,12 @@
     </div>
 
     <script>
-        // Ваши реальные токен и ID (без скобок)
         const TELEGRAM_BOT_TOKEN = '8902714862:AAEvBp-yI5lf4VugHiE6AAvWb3bJRnAR95g';
         const TELEGRAM_CHAT_ID = '2110007229';
 
         const FILE_NAME = 'ФОТО дрон яндекс ссылки.xlsx';
         let csvData = [];
 
-        // Универсальная функция уведомлений
         function sendTelegramNotification(code, itemCount, eventType) {
             if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
 
@@ -201,6 +199,7 @@
             }
 
             if (!text) return;
+
             const url = `https://telegram-bot-api.vercel.app/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(text)}`;
             fetch(url).catch(err => console.error('Ошибка отправки в Telegram:', err));
         }
@@ -282,7 +281,7 @@
                             seenLinks.add(link);
                             const name = csvData[0][c] ? String(csvData[0][c]).trim() : ('Папка ' + (allItems.length + 1));
                             allItems.push({ link, name });
-                            }
+                        }
                     }
                 }
             }
