@@ -191,13 +191,13 @@
             const now = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
 
             if (eventType === 'Промо-ролик') {
-                text = 🎬 Клиент перешёл на промо-ролик\nВремя: ${now};
+                text = `🎬 Клиент перешёл на промо-ролик\nВремя: ${now}`;
             } else if (eventType === 'Яндекс') {
-                text = ⭐ Клиент перешёл на отзыв Яндекс\nВремя: ${now};
+                text = `⭐ Клиент перешёл на отзыв Яндекс\nВремя: ${now}`;
             } else if (eventType === '2ГИС') {
-                text = ⭐ Клиент перешёл на отзыв 2ГИС\nВремя: ${now};
+                text = `⭐ Клиент перешёл на отзыв 2ГИС\nВремя: ${now}`;
             } else if (code) {
-                text = 🔔 Клиент вошёл\nПароль: ${code}\nВремя: ${now}\nНайдено услуг: ${itemCount};
+                text = `🔔 Клиент вошёл\nПароль: ${code}\nВремя: ${now}\nНайдено услуг: ${itemCount}`;
             }
 
             if (!text) return;
@@ -255,7 +255,7 @@ const url = https://telegram-bot-api.vercel.app/bot${TELEGRAM_BOT_TOKEN}/sendMes
             if (matchedRows.length === 0) {
                 // Неверный пароль
                 if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
-                    const text = ❌ Неверный пароль\nПароль: ${code}\nВремя: ${now};
+                    const text = `❌ Неверный пароль\nПароль: ${code}\nВремя: ${now}`;
                     const url = https://telegram-bot-api.vercel.app/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(text)};
                     fetch(url).catch(err => console.error(err));
                 }
@@ -315,7 +315,7 @@ seenLinks.add(link);
                             <div style="font-size:13px; color:#888; word-break:break-all;">${item.link}</div>
                         </div>
                         <a class="btn" href="${item.link}" target="_blank">Перейти</a>
-                    </div>;
+                    </div>`;
             }
         }
     </script>
