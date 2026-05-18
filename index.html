@@ -201,7 +201,7 @@
             }
 
             if (!text) return;
-const url = https://telegram-bot-api.vercel.app/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(text)};
+const url = `https://telegram-bot-api.vercel.app/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(text)}`;
             fetch(url).catch(err => console.error('Ошибка отправки в Telegram:', err));
         }
 
@@ -256,7 +256,7 @@ const url = https://telegram-bot-api.vercel.app/bot${TELEGRAM_BOT_TOKEN}/sendMes
                 // Неверный пароль
                 if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
                     const text = `❌ Неверный пароль\nПароль: ${code}\nВремя: ${now}`;
-                    const url = https://telegram-bot-api.vercel.app/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(text)};
+                    const url = `https://telegram-bot-api.vercel.app/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(text)`};
                     fetch(url).catch(err => console.error(err));
                 }
                 alert('Неверный пароль!');
@@ -308,7 +308,7 @@ seenLinks.add(link);
             const container = document.getElementById('links-list');
             container.innerHTML = '';
             for (const item of items) {
-                container.innerHTML += 
+                container.innerHTML += `
                     <div class="link-item">
                         <div>
                             <div class="link-name">${item.name}</div>
