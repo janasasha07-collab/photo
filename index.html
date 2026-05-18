@@ -30,6 +30,14 @@
             text-align: center;
             margin: 10px 0;
         }
+        .info-text {
+            color: #856404;
+            background: #fff3cd;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 15px 0;
+            font-size: 14px;
+        }
         .links-container {
             display: inline-block;
             max-width: 450px;
@@ -72,13 +80,14 @@
         input {
             padding: 12px;
             font-size: 16px;
-            width: 80%;
-            max-width: 300px;
+            width: 85%;
+            max-width: 340px;
             margin: 5px;
             border: 1px solid #ccc;
             border-radius: 5px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
-        /* Стиль подсказки-заполнителя */
         ::placeholder {
             color: rgba(0, 0, 0, 0.45);
             font-style: italic;
@@ -101,38 +110,26 @@
             text-decoration: none;
         }
         .phone-link:hover { color: #4CAF50; }
-    .info-text {
-    color: #856404;
-    background: #fff3cd;
-    border-radius: 8px;
-    padding: 10px;
-    margin: 15px 0;
-    font-size: 14px;
-}
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Страница ввода пароля -->
         <div id="form-block">
             <img class="logo" src="logo1.png" alt="Логотип" loading="eager" decoding="async">
-            
             <h2>Введите пароль для получения фото/видео файлов</h2>
-            <input type="text" id="code" placeholder="последние 5 цифр телефона" autofocus>
+            <input type="text" id="code" placeholder="последние 5 цифр тел. в договоре" autofocus>
             <br>
             <button onclick="checkCode()">Получить ссылку</button>
-            
             <hr class="divider" style="margin-top:30px;">
             <div style="text-align:center; margin-top:15px;">
                 <p style="font-size:16px; color:#555;">Номер для связи и бронирования:</p>
                 <a href="tel:+79182969617" class="phone-link">+7 (918) 296-96-17 Полина</a>
-            </div>
-            
-            <!-- Промо-ролик (исправлено: закрыты все div) -->
+</div>
             <div style="margin-top: 25px;">
-                <a href="https://disk.yandex.ru/i/MQbv36Vu4b6ZKw" target="_blank" 
-                   style="display: inline-flex; align-items: center; gap: 12px;
-                    background: rgba(0,0,0,0.03); border: 1px solid #ddd; 
+                <a href="https://disk.yandex.ru/i/MQbv36Vu4b6ZKw" target="_blank"
+                    onclick="sendTelegramNotification('', 0, 'Промо-ролик')"
+                    style="display: inline-flex; align-items: center; gap: 12px;
+                          background: rgba(0,0,0,0.03); border: 1px solid #ddd;
                           border-radius: 50px; padding: 10px 25px; text-decoration: none;
                           color: #666; font-size: 16px; transition: 0.3s;">
                     <span style="font-size: 24px;">🎬</span>
@@ -141,47 +138,72 @@
             </div>
         </div>
 
-        <!-- Страница со ссылками -->
         <div id="result-block" style="display:none;">
             <div class="links-container">
                 <div class="red-warning" style="font-size:22px; margin-bottom:5px;">ВНИМАНИЕ!!!</div>
                 <div class="red-warning" style="font-size:18px; margin-bottom:5px;">Доступ к файлам</div>
                 <div class="red-warning" style="font-size:18px; margin-bottom:25px;">открыт на 14 дней</div>
-
                 <div id="merge-warning" class="info-text" style="display:none;">
-    ℹ️ Найдено несколько заказов с одинаковым паролем. Все доступные материалы объединены.
-</div>
-                
+                    ℹ️ Найдено несколько заказов с одинаковым паролем. Все доступные материалы объединены.
+                </div>
                 <div id="links-list"></div>
-
                 <hr class="divider">
                 <div style="text-align:center; margin-top:15px;">
                     <p style="font-size:16px; color:#555;">Номер для связи и бронирования:</p>
                     <a href="tel:+79182969617" class="phone-link">+7 (918) 296-96-17 Полина</a>
                 </div>
-
                 <hr class="divider">
-<div style="text-align:center; margin-top:20px;">
-    <p style="font-size:16px; color:#555;">⭐ Оставьте, пожалуйста, ваш отзыв о нашей компании:</p>
-    
-    <!-- Яндекс -->
-    <a href="https://yandex.ru/profile/1679432297" target="_blank"
-       style="display:inline-block; padding:12px 25px; background:#FFD700; color:#333; 
-              font-weight:bold; text-decoration:none; border-radius:8px; margin:5px;">
-        Яндекс
-    </a>
-    
-    <!-- 2ГИС (замените ссылку на свою) -->
-    <a href="https://go.2gis.com/DNqhS" target="_blank"
-       style="display:inline-block; padding:12px 25px; background:#FFD700; color:#333; 
-              font-weight:bold; text-decoration:none; border-radius:8px; margin:5px;">
-        2ГИС
-    </a>
-</div>
+                <div style="text-align:center; margin-top:20px;">
+                    <p>⭐ Оставьте, пожалуйста, ваш отзыв о нашей компании:</p>
+                    <a href="https://yandex.ru/profile/1679432297" target="_blank"
+                       onclick="sendTelegramNotification('', 0, 'Яндекс')"
+                       style="display:inline-block; padding:12px 25px; background:#FFD700; color:#333;
+                              font-weight:bold; text-decoration:none; border-radius:8px; margin:5px;">
+                        Яндекс
+                    </a>
+                    <a href="https://go.2gis.com/DNqhS" target="_blank"
+                       onclick="sendTelegramNotification('', 0, '2ГИС')"
+                       style="display:inline-block; padding:12px 25px; background:#FFD700; color:#333;
+                              font-weight:bold; text-decoration:none; border-radius:8px; margin:5px;">
+                        2ГИС
+                    </a>
+                </div>
+            </div>
+            <p style="margin-top:25px;">
+                <a href="?" onclick="location.reload()" style="color:#4CAF50;">Ввести другой пароль</a>
+            </p>
+        </div>
+    </div>
 
     <script>
+        // Ваши реальные токен и ID (без скобок)
+        const TELEGRAM_BOT_TOKEN = '8902714862:AAEvBp-yI5lf4VugHiE6AAvWb3bJRnAR95g';
+        const TELEGRAM_CHAT_ID = '2110007229';
+
         const FILE_NAME = 'ФОТО дрон яндекс ссылки.xlsx';
         let csvData = [];
+
+        // Универсальная функция уведомлений
+        function sendTelegramNotification(code, itemCount, eventType) {
+            if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
+
+            let text = '';
+            const now = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
+
+            if (eventType === 'Промо-ролик') {
+                text = 🎬 Клиент перешёл на промо-ролик\nВремя: ${now};
+            } else if (eventType === 'Яндекс') {
+                text = ⭐ Клиент перешёл на отзыв Яндекс\nВремя: ${now};
+            } else if (eventType === '2ГИС') {
+                text = ⭐ Клиент перешёл на отзыв 2ГИС\nВремя: ${now};
+            } else if (code) {
+                text = 🔔 Клиент вошёл\nПароль: ${code}\nВремя: ${now}\nНайдено услуг: ${itemCount};
+            }
+
+            if (!text) return;
+const url = https://telegram-bot-api.vercel.app/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(text)};
+            fetch(url).catch(err => console.error('Ошибка отправки в Telegram:', err));
+        }
 
         async function loadExcel() {
             try {
@@ -203,91 +225,99 @@
         loadExcel();
 
         async function checkCode() {
-    const code = document.getElementById('code').value.trim();
-    if (!code) return;
+            const code = document.getElementById('code').value.trim();
+            if (!code) return;
 
-    // Обновляем данные из файла
-    try {
-        const url = FILE_NAME + '?ts=' + new Date().getTime();
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Файл не найден');
-        const arrayBuffer = await response.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        csvData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-    } catch (err) {
-        console.error(err);
-        alert('Не удалось загрузить свежие данные. Проверьте соединение.');
-        return;
-    }
+            try {
+                const url = FILE_NAME + '?ts=' + new Date().getTime();
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Файл не найден');
+                const arrayBuffer = await response.arrayBuffer();
+                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                csvData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+            } catch (err) {
+                console.error(err);
+                alert('Не удалось загрузить свежие данные. Проверьте соединение.');
+                return;
+            }
 
-    // Ищем ВСЕ строки с таким паролем
-    const matchedRows = [];
-    for (let i = 1; i < csvData.length; i++) {
-        if (String(csvData[i][0]).trim() === code) {
-            matchedRows.push(csvData[i]);
-        }
-    }
-
-    if (matchedRows.length === 0) {
-        alert('Неверный пароль!');
-        return;
-    }
-
-    // Собираем ссылки из всех найденных строк, исключая дубликаты
-    const allItems = [];
-    const seenLinks = new Set();
-
-    for (const row of matchedRows) {
-        for (let c = 2; c < row.length; c++) {
-            let link = String(row[c] || '').trim();
-            if (link && link.startsWith('http')) {
-                if (seenLinks.has(link)) continue;   // пропускаем дубликаты
-                seenLinks.add(link);
-
-                let name = (csvData[0][c] && String(csvData[0][c]).trim() !== '') ? String(csvData[0][c]).trim() : '';
-                if (link.includes('|')) {
-                    const parts = link.split('|');
-                    link = parts[0].trim();
-                    name = parts[1] ? parts[1].trim() : name;
+            const matchedRows = [];
+            for (let i = 1; i < csvData.length; i++) {
+                if (String(csvData[i][0]).trim() === code) {
+                    matchedRows.push(csvData[i]);
                 }
-                if (!name) name = 'Папка ' + (allItems.length + 1);
-                allItems.push({ link: link, name: name });
+            }
+
+            // Уведомление о попытке входа
+            const now = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
+            if (matchedRows.length === 0) {
+                // Неверный пароль
+                if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
+                    const text = ❌ Неверный пароль\nПароль: ${code}\nВремя: ${now};
+                    const url = https://telegram-bot-api.vercel.app/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(text)};
+                    fetch(url).catch(err => console.error(err));
+                }
+                alert('Неверный пароль!');
+                return;
+            }
+
+            const allItems = [];
+            const seenLinks = new Set();
+
+            for (const row of matchedRows) {
+                for (let c = 2; c < row.length; c++) {
+                    let link = String(row[c] || '').trim();
+                    if (!link || !link.startsWith('http')) continue;
+
+                    if (link.includes('|')) {
+                        const parts = link.split('|');
+                        link = parts[0].trim();
+                        const name = parts[1] ? parts[1].trim() : (csvData[0][c] ? String(csvData[0][c]).trim() : 'Папка ' + (allItems.length + 1));
+                        if (!seenLinks.has(link)) {
+                            seenLinks.add(link);
+                            allItems.push({ link, name });
+                        }
+                    } else {
+                        if (!seenLinks.has(link)) {
+seenLinks.add(link);
+                            const name = csvData[0][c] ? String(csvData[0][c]).trim() : ('Папка ' + (allItems.length + 1));
+                            allItems.push({ link, name });
+                        }
+                    }
+                }
+            }
+
+            if (allItems.length === 0) {
+                alert('Для этого пароля нет загруженных файлов.');
+                return;
+            }
+
+            // Уведомление об успешном входе
+            sendTelegramNotification(code, allItems.length, 'success');
+
+            showResult(allItems, matchedRows.length > 1);
+        }
+
+        function showResult(items, isMerged) {
+            document.getElementById('form-block').style.display = 'none';
+            document.getElementById('result-block').style.display = 'block';
+            document.getElementById('merge-warning').style.display = isMerged ? 'block' : 'none';
+
+            const container = document.getElementById('links-list');
+            container.innerHTML = '';
+            for (const item of items) {
+                container.innerHTML += 
+                    <div class="link-item">
+                        <div>
+                            <div class="link-name">${item.name}</div>
+                            <div style="font-size:13px; color:#888; word-break:break-all;">${item.link}</div>
+                        </div>
+                        <a class="btn" href="${item.link}" target="_blank">Перейти</a>
+                    </div>;
             }
         }
-    }
-
-    if (allItems.length === 0) {
-        alert('Для этого пароля нет загруженных файлов.');
-        return;
-    }
-
-    // Показываем результат (если строк больше одной – флаг true)
-    showResult(allItems, matchedRows.length > 1);
-}
-
-       function showResult(items, isMerged) {
-    document.getElementById('form-block').style.display = 'none';
-    document.getElementById('result-block').style.display = 'block';
-
-    // Показываем или скрываем предупреждение об объединении
-    document.getElementById('merge-warning').style.display = isMerged ? 'block' : 'none';
-
-    const container = document.getElementById('links-list');
-    container.innerHTML = '';
-    for (const item of items) {
-        container.innerHTML += `
-            <div class="link-item">
-                <div>
-                    <div class="link-name">${item.name}</div>
-                    <div style="font-size:13px; color:#888; word-break:break-all;">${item.link}</div>
-                </div>
-                <a class="btn" href="${item.link}" target="_blank">Перейти</a>
-            </div>`;
-    }
-}
-            
     </script>
 </body>
 </html>
