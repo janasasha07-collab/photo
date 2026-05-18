@@ -124,10 +124,10 @@
             <div style="text-align:center; margin-top:15px;">
                 <p style="font-size:16px; color:#555;">Номер для связи и бронирования:</p>
                 <a href="tel:+79182969617" class="phone-link">+7 (918) 296-96-17 Полина</a>
-            </div>
+                </div>
             <div style="margin-top: 25px;">
                 <a href="https://disk.yandex.ru/i/MQbv36Vu4b6ZKw" target="_blank"
-                  onclick="sendTelegramNotification('', 0, 'Промо-ролик')"
+                    onclick="sendTelegramNotification('', 0, 'Промо-ролик')"
                     style="display: inline-flex; align-items: center; gap: 12px;
                           background: rgba(0,0,0,0.03); border: 1px solid #ddd;
                           border-radius: 50px; padding: 10px 25px; text-decoration: none;
@@ -176,7 +176,7 @@
     </div>
 
     <script>
-        // ⚠️ ЗАМЕНИТЕ НА ВАШИ РЕАЛЬНЫЕ ТОКЕН И ID
+        // ⚠️ ВСТАВЬТЕ СВОЙ ТОКЕН И ID БЕЗ СКОБОК
         const TELEGRAM_BOT_TOKEN = '8902714862:AAEvBp-yI5lf4VugHiE6AAvWb3bJRnAR95g';
         const TELEGRAM_CHAT_ID = '2110007229';
 
@@ -191,18 +191,17 @@
             const now = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
 
             if (eventType === 'Промо-ролик') {
-                text = `🎬 Клиент перешёл на промо-ролик\nВремя: ${now}`;
+                text = 🎬 Клиент перешёл на промо-ролик\nВремя: ${now};
             } else if (eventType === 'Яндекс') {
-                text = `⭐ Клиент перешёл на отзыв Яндекс\nВремя: ${now}`;
+                text = ⭐ Клиент перешёл на отзыв Яндекс\nВремя: ${now};
             } else if (eventType === '2ГИС') {
-                text = `⭐ Клиент перешёл на отзыв 2ГИС\nВремя: ${now}`;
+                text = ⭐ Клиент перешёл на отзыв 2ГИС\nВремя: ${now};
             } else if (code) {
-                // Успешный вход
-                text = `🔔 Клиент вошёл\nПароль: ${code}\nВремя: ${now}\nНайдено услуг: ${itemCount}`;
+                text = 🔔 Клиент вошёл\nПароль: ${code}\nВремя: ${now}\nНайдено услуг: ${itemCount};
             }
 
             if (!text) return;
-          const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(text)}`;
+            const url = https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(text)};
             fetch(url).catch(err => console.error('Ошибка отправки в Telegram:', err));
         }
 
@@ -256,8 +255,8 @@
             if (matchedRows.length === 0) {
                 // Неверный пароль
                 if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
-                    const text = `❌ Неверный пароль\nПароль: ${code}\nВремя: ${now}`;
-                    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(text)}`;
+                    const text = ❌ Неверный пароль\nПароль: ${code}\nВремя: ${now};
+                    const url = https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(text)};
                     fetch(url).catch(err => console.error(err));
                 }
                 alert('Неверный пароль!');
@@ -284,7 +283,7 @@
                         if (!seenLinks.has(link)) {
                             seenLinks.add(link);
                             const name = csvData[0][c] ? String(csvData[0][c]).trim() : ('Папка ' + (allItems.length + 1));
-                          allItems.push({ link, name });
+                            allItems.push({ link, name });
                         }
                     }
                 }
@@ -309,14 +308,14 @@
             const container = document.getElementById('links-list');
             container.innerHTML = '';
             for (const item of items) {
-                container.innerHTML += `
+                container.innerHTML += 
                     <div class="link-item">
                         <div>
                             <div class="link-name">${item.name}</div>
                             <div style="font-size:13px; color:#888; word-break:break-all;">${item.link}</div>
                         </div>
                         <a class="btn" href="${item.link}" target="_blank">Перейти</a>
-                    </div>`;
+                    </div>;
             }
         }
     </script>
