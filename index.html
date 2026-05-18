@@ -124,7 +124,7 @@
             <div style="text-align:center; margin-top:15px;">
                 <p style="font-size:16px; color:#555;">Номер для связи и бронирования:</p>
                 <a href="tel:+79182969617" class="phone-link">+7 (918) 296-96-17 Полина</a>
-</div>
+            </div>
             <div style="margin-top: 25px;">
                 <a href="https://disk.yandex.ru/i/MQbv36Vu4b6ZKw" target="_blank"
                     onclick="sendTelegramNotification('', 0, 'Промо-ролик')"
@@ -201,7 +201,7 @@
             }
 
             if (!text) return;
-const url = `https://telegram-bot-api.vercel.app/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(text)}`;
+            const url = `https://telegram-bot-api.vercel.app/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(text)}`;
             fetch(url).catch(err => console.error('Ошибка отправки в Telegram:', err));
         }
 
@@ -250,10 +250,8 @@ const url = `https://telegram-bot-api.vercel.app/bot${TELEGRAM_BOT_TOKEN}/sendMe
                 }
             }
 
-            // Уведомление о попытке входа
             const now = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
             if (matchedRows.length === 0) {
-                // Неверный пароль
                 if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
                     const text = `❌ Неверный пароль\nПароль: ${code}\nВремя: ${now}`;
                     const url = `https://telegram-bot-api.vercel.app/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(text)}`;
@@ -281,10 +279,10 @@ const url = `https://telegram-bot-api.vercel.app/bot${TELEGRAM_BOT_TOKEN}/sendMe
                         }
                     } else {
                         if (!seenLinks.has(link)) {
-seenLinks.add(link);
+                            seenLinks.add(link);
                             const name = csvData[0][c] ? String(csvData[0][c]).trim() : ('Папка ' + (allItems.length + 1));
                             allItems.push({ link, name });
-                        }
+                            }
                     }
                 }
             }
@@ -294,9 +292,7 @@ seenLinks.add(link);
                 return;
             }
 
-            // Уведомление об успешном входе
             sendTelegramNotification(code, allItems.length, 'success');
-
             showResult(allItems, matchedRows.length > 1);
         }
 
