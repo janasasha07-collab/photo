@@ -364,6 +364,45 @@
             }).catch(err => console.error('Ошибка отправки:', err));
             alert('Запрос на продление отправлен. Попробуйте снова через 12 часов.');
         }
+                async function logStatistic(code, service, action) {
+            try {
+                const url = FILE_NAME + '?ts=' + new Date().getTime();
+                const response = await fetch(url);
+                if (!response.ok) return;
+                const arrayBuffer = await response.arrayBuffer();
+                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                
+                // Читаем лист Статистика (если его нет, создаём)
+                let statsSheet = workbook.Sheets['Статистика'];
+                if (!statsSheet) {
+                    statsSheet = XLSX.utils.aoa_to_sheet([['Время', 'Пароль', 'Услуга', 'Действие']]);
+                    workbook.SheetNames.push('Статистика');
+                    workbook.Sheets['Статистика'] = statsSheet;
+                }
+                
+                // Преобразуем в массив
+                const statsData = XLSX.utils.sheet_to_json(statsSheet, { header: 1, defval: '' });
+                
+                // Добавляем новую строку
+                const now = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
+                statsData.push([now, code, service, action]);
+                
+                // Обновляем лист
+                const newSheet = XLSX.utils.aoa_to_sheet(statsData);
+                workbook.Sheets['Статистика'] = newSheet;
+                
+                // Сохраняем обратно на GitHub (НЕВОЗМОЖНО из браузера)
+                // Поэтому мы сохраняем в localStorage как резерв
+                const key = 'stats_' + FILE_NAME;
+                const stored = JSON.parse(localStorage.getItem(key) || '[]');
+                stored.push({ time: now, code, service, action });
+                localStorage.setItem(key, JSON.stringify(stored));
+                
+                console.log('Статистика обновлена (локально):', now, code, service, action);
+            } catch (err) {
+                console.error('Ошибка записи статистики:', err);
+            }
+        }
     </script>
 </body>
 </html>
