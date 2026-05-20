@@ -298,6 +298,15 @@
                     if (seenLinks.has(uniqueKey)) continue;
                     seenLinks.add(uniqueKey);
 
+                                       // Если ссылка истекла – отправляем отдельное уведомление
+                    if (expired) {
+                        const expiredText = `⏰ Истёкшая ссылка\nПароль: ${code}\nУслуга: ${name}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+                        fetch(`https://ntfy.sh/${NTFY_TOPIC}`, {
+                            method: 'POST',
+                            body: expiredText
+                        }).catch(err => console.error('Ошибка отправки:', err));
+                    }
+
                     allItems.push({
                         link: link,
                         name: name,
