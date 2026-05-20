@@ -332,12 +332,15 @@
             const container = document.getElementById('links-list');
             container.innerHTML = '';
                         for (const item of items) {
-                if (item.expired) {
+                              if (item.expired) {
                     container.innerHTML += `
                         <div class="link-item" style="background:#fff5f5; border:1px solid #ffcccc;">
                             <div>
                                 <div class="link-name">${item.name}</div>
-                                <div style="font-size:14px; color:red; font-weight:bold;">Срок доступа истёк</div>
+                                <div style="font-size:14px; color:red; font-weight:bold; margin-bottom:8px;">Срок доступа истёк</div>
+                                <button onclick="requestExtension('${item.name}')" style="padding:6px 14px; font-size:13px; background:#ff9800; color:white; border:none; border-radius:4px; cursor:pointer;">
+                                    Запросить продление
+                                </button>
                             </div>
                         </div>`;
                 } else {
@@ -351,6 +354,15 @@
                         </div>`;
                 }
             }
+        }
+                function requestExtension(serviceName) {
+            const code = document.getElementById('code').value.trim() || 'неизвестен';
+            const text = `🔁 Запрос на продление\nПароль: ${code}\nУслуга: ${serviceName}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+            fetch(`https://ntfy.sh/${NTFY_TOPIC}`, {
+                method: 'POST',
+                body: text
+            }).catch(err => console.error('Ошибка отправки:', err));
+            alert('Запрос на продление отправлен. Мы свяжемся с вами.');
         }
     </script>
 </body>
