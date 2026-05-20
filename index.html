@@ -264,26 +264,45 @@
             const allItems = [];
             const seenLinks = new Set();
 
-            for (const row of matchedRows) {
+                        for (const row of matchedRows) {
                 for (let c = 2; c < row.length; c++) {
-                    let link = String(row[c] || '').trim();
-                    if (!link || !link.startsWith('http')) continue;
+                    let raw = String(row[c] || '').trim();
+                    if (!raw) continue;
+
+                    // Определяем, истекла ли ссылка
+                    let expired = false;
+                    if (raw.startsWith('!')) {
+                        expired = true;
+                        raw = raw.substring(1).trim(); // убираем восклицательный знак
+                        if (!raw || !raw.startsWith('http')) continue; // если после ! пусто или не ссылка – пропускаем
+                    }
+
+                    let link = raw;
+                    let name = '';
 
                     if (link.includes('|')) {
                         const parts = link.split('|');
                         link = parts[0].trim();
-                        const name = parts[1] ? parts[1].trim() : (csvData[0][c] ? String(csvData[0][c]).trim() : 'Папка ' + (allItems.length + 1));
-                        if (!seenLinks.has(link)) {
-                            seenLinks.add(link);
-                            allItems.push({ link, name });
-                        }
+                        name = parts[1] ? parts[1].trim() : (csvData[0][c] ? String(csvData[0][c]).trim() : '');
                     } else {
-                        if (!seenLinks.has(link)) {
-                            seenLinks.add(link);
-                            const name = csvData[0][c] ? String(csvData[0][c]).trim() : ('Папка ' + (allItems.length + 1));
-                            allItems.push({ link, name });
-                        }
+                        name = csvData[0][c] ? String(csvData[0][c]).trim() : '';
                     }
+
+                    if (!link.startsWith('http')) continue;
+
+                    // Имя по умолчанию
+                    if (!name) name = 'Папка ' + (allItems.length + 1);
+
+                    // Избегаем дубликатов
+                    const uniqueKey = expired ? 'EXPIRED:' + name : link;
+                    if (seenLinks.has(uniqueKey)) continue;
+                    seenLinks.add(uniqueKey);
+
+                    allItems.push({
+                        link: link,
+                        name: name,
+                        expired: expired
+                    });
                 }
             }
 
@@ -303,15 +322,25 @@
 
             const container = document.getElementById('links-list');
             container.innerHTML = '';
-            for (const item of items) {
-                container.innerHTML += `
-                    <div class="link-item">
-                        <div>
-                            <div class="link-name">${item.name}</div>
-                            <div style="font-size:13px; color:#888; word-break:break-all;">${item.link}</div>
-                        </div>
-                        <a class="btn" href="${item.link}" target="_blank">Перейти</a>
-                    </div>`;
+                        for (const item of items) {
+                if (item.expired) {
+                    container.innerHTML += `
+                        <div class="link-item" style="background:#fff5f5; border:1px solid #ffcccc;">
+                            <div>
+                                <div class="link-name">${item.name}</div>
+                                <div style="font-size:14px; color:red; font-weight:bold;">Срок доступа истёк</div>
+                            </div>
+                        </div>`;
+                } else {
+                    container.innerHTML += `
+                        <div class="link-item">
+                            <div>
+                                <div class="link-name">${item.name}</div>
+                                <div style="font-size:13px; color:#888; word-break:break-all;">${item.link}</div>
+                            </div>
+                            <a class="btn" href="${item.link}" target="_blank">Перейти</a>
+                        </div>`;
+                }
             }
         }
     </script>
