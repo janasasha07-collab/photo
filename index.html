@@ -405,13 +405,30 @@
             }
         }
     </script>
-        <div style="text-align:center; margin-top:40px; opacity:0.6;">
+          <!-- Скрытая кнопка статистики (появляется после тройного клика) -->
+        <div id="stats-section" style="display:none; text-align:center; margin-top:40px;">
             <button onclick="showStats()" style="padding:8px 16px; font-size:12px; background:#888; color:white; border:none; border-radius:4px; cursor:pointer;">
                 📊 Моя статистика
             </button>
             <div id="stats-output" style="margin-top:10px; font-size:12px; color:#555; text-align:left; max-width:500px; margin-left:auto; margin-right:auto;"></div>
         </div>
+
         <script>
+            // Тройной клик для открытия статистики
+            let clickCount = 0;
+            let clickTimer = null;
+            document.addEventListener('click', function(e) {
+                clickCount++;
+                if (clickCount === 1) {
+                    clickTimer = setTimeout(() => { clickCount = 0; }, 1000);
+                }
+                if (clickCount >= 3) {
+                    clearTimeout(clickTimer);
+                    clickCount = 0;
+                    document.getElementById('stats-section').style.display = 'block';
+                }
+            });
+
             function showStats() {
                 const key = 'stats_' + FILE_NAME;
                 const stored = JSON.parse(localStorage.getItem(key) || '[]');
