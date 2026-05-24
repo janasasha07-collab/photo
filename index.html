@@ -6,12 +6,13 @@
     <title>Мои фото</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-         body {
+        body {
             font-family: Arial, sans-serif;
             text-align: center;
             margin: 0;
             padding: 40px 10px;
-            background: #f2f4f8;
+            background: url('background.jpg?v=2') no-repeat center center fixed;
+            background-size: cover;
         }
         .container {
             max-width: 500px;
@@ -131,7 +132,7 @@
             </div>
             <div style="margin-top: 25px;">
                 <a href="https://disk.yandex.ru/i/MQbv36Vu4b6ZKw" target="_blank"
-                    onclick="sendNotification('', 0, 'Промо-ролик')"
+                    onclick="logEvent('', 'promo', 'Рафтинг на 1 канале'); sendNotification('', 0, 'Промо-ролик')"
                     style="display: inline-flex; align-items: center; gap: 12px;
                           background: rgba(0,0,0,0.03); border: 1px solid #ddd;
                           border-radius: 50px; padding: 10px 25px; text-decoration: none;
@@ -160,13 +161,13 @@
                 <div style="text-align:center; margin-top:20px;">
                     <p>⭐ Оставьте, пожалуйста, ваш отзыв о нашей компании:</p>
                     <a href="https://yandex.ru/profile/1679432297" target="_blank"
-                       onclick="sendNotification('', 0, 'Яндекс')"
+                       onclick="logEvent('', 'review_yandex', 'Яндекс'); sendNotification('', 0, 'Яндекс')"
                        style="display:inline-block; padding:12px 25px; background:#FFD700; color:#333;
                               font-weight:bold; text-decoration:none; border-radius:8px; margin:5px;">
                         Яндекс
                     </a>
                     <a href="https://go.2gis.com/DNqhS" target="_blank"
-                       onclick="sendNotification('', 0, '2ГИС')"
+                       onclick="logEvent('', 'review_2gis', '2ГИС'); sendNotification('', 0, '2ГИС')"
                        style="display:inline-block; padding:12px 25px; background:#FFD700; color:#333;
                               font-weight:bold; text-decoration:none; border-radius:8px; margin:5px;">
                         2ГИС
@@ -180,13 +181,49 @@
     </div>
 
     <script>
-        // ⚠️ ПРИДУМАЙТЕ СВОЁ УНИКАЛЬНОЕ НАЗВАНИЕ ТЕМЫ (латиница и цифры, например: PolinaPhoto2026)
-        const NTFY_TOPIC = 'PolinaPhoto2026';   // <-- ЗАМЕНИТЕ НА СВОЁ
+        // ⚠️ Замените на свои реальные данные JSONbin
+        const JSONBIN_URL = 'https://api.jsonbin.io/v3/b/6a129163ee5a733b120e3e02';
+        const JSONBIN_KEY = '$2a$10$6CkH8BE7SIotWUGwgP/hSuqLP6aa2dUi.567cCK555ivfdy4gnipm';
 
+        const NTFY_TOPIC = 'PolinaPhoto2026';
         const FILE_NAME = 'ФОТО дрон яндекс ссылки.xlsx';
         let csvData = [];
 
-        // Функция отправки уведомления через ntfy.sh (без регистрации, без ВПН)
+        // === Функция записи события в JSONbin ===
+        async function logEvent(code, action, details = '') {
+            try {
+                const now = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
+                // Получаем текущий массив событий
+                const getResp = await fetch(JSONBIN_URL + '/latest', {
+                    headers: { 'X-Access-Key': JSONBIN_KEY }
+                });
+                const data = await getResp.json();
+                const events = data.record.events || [];
+
+                // Добавляем новое событие
+                events.push({
+                    time: now,
+                    code: code || '—',
+                    action: action,
+                    details: details
+                });
+
+                // Сохраняем обратно
+                await fetch(JSONBIN_URL, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Access-Key': JSONBIN_KEY
+                    },
+                    body: JSON.stringify({ events: events })
+                });
+                console.log('Событие записано:', { code, action, details });
+            } catch (err) {
+                console.error('Ошибка записи события:', err);
+            }
+        }
+
+        // === Уведомления в ntfy ===
         function sendNotification(code, itemCount, eventType) {
             let text = '';
             const now = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
@@ -203,8 +240,7 @@
                 return;
             }
 
-            // Отправляем POST-запрос на ntfy.sh (безопасно, без CORS-проблем)
-        fetch(`https://ntfy.sh/${NTFY_TOPIC}`, {
+            fetch(`https://ntfy.sh/${NTFY_TOPIC}`, {
                 method: 'POST',
                 body: text
             }).catch(err => console.error('Ошибка отправки:', err));
@@ -257,7 +293,8 @@
 
             const now = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
             if (matchedRows.length === 0) {
-                // Неверный пароль – тоже уведомление
+                // Неверный пароль
+                logEvent(code, 'attempt', 'Неверный пароль');
                 const text = `❌ Неверный пароль\nПароль: ${code}\nВремя: ${now}`;
                 fetch(`https://ntfy.sh/${NTFY_TOPIC}`, { method: 'POST', body: text })
                     .catch(err => console.error(err));
@@ -268,17 +305,16 @@
             const allItems = [];
             const seenLinks = new Set();
 
-                        for (const row of matchedRows) {
+            for (const row of matchedRows) {
                 for (let c = 2; c < row.length; c++) {
                     let raw = String(row[c] || '').trim();
                     if (!raw) continue;
 
-                    // Определяем, истекла ли ссылка
                     let expired = false;
                     if (raw.startsWith('!')) {
                         expired = true;
-                        raw = raw.substring(1).trim(); // убираем восклицательный знак
-                        if (!raw || !raw.startsWith('http')) continue; // если после ! пусто или не ссылка – пропускаем
+                        raw = raw.substring(1).trim();
+                        if (!raw || !raw.startsWith('http')) continue;
                     }
 
                     let link = raw;
@@ -293,22 +329,19 @@
                     }
 
                     if (!link.startsWith('http')) continue;
-
-                    // Имя по умолчанию
                     if (!name) name = 'Папка ' + (allItems.length + 1);
 
-                    // Избегаем дубликатов
                     const uniqueKey = expired ? 'EXPIRED:' + name : link;
                     if (seenLinks.has(uniqueKey)) continue;
                     seenLinks.add(uniqueKey);
 
-                                       // Если ссылка истекла – отправляем отдельное уведомление
                     if (expired) {
                         const expiredText = `⏰ Истёкшая ссылка\nПароль: ${code}\nУслуга: ${name}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
                         fetch(`https://ntfy.sh/${NTFY_TOPIC}`, {
                             method: 'POST',
                             body: expiredText
                         }).catch(err => console.error('Ошибка отправки:', err));
+                        logEvent(code, 'expired', name);
                     }
 
                     allItems.push({
@@ -321,11 +354,12 @@
 
             if (allItems.length === 0) {
                 alert('Для этого пароля нет загруженных файлов.');
+                logEvent(code, 'success', 'Нет файлов');
                 return;
             }
 
+            logEvent(code, 'success', 'Вход выполнен');
             sendNotification(code, allItems.length, 'success');
-            logStatistic(code, 'все услуги', 'вход');
             showResult(allItems, matchedRows.length > 1);
         }
 
@@ -336,8 +370,10 @@
 
             const container = document.getElementById('links-list');
             container.innerHTML = '';
-                        for (const item of items) {
-                              if (item.expired) {
+            const currentCode = document.getElementById('code').value.trim() || 'неизвестен';
+
+            for (const item of items) {
+                if (item.expired) {
                     container.innerHTML += `
                         <div class="link-item" style="background:#fff5f5; border:1px solid #ffcccc;">
                             <div>
@@ -355,100 +391,80 @@
                                 <div class="link-name">${item.name}</div>
                                 <div style="font-size:13px; color:#888; word-break:break-all;">${item.link}</div>
                             </div>
-                <a class="btn" href="${item.link}" target="_blank" onclick="logStatistic('${code}', '${item.name}', 'переход')">Перейти</a>
+                            <a class="btn" href="${item.link}" target="_blank"
+                               onclick="logEvent('${currentCode}', 'link_click', '${item.name}')">Перейти</a>
                         </div>`;
                 }
             }
         }
-                function requestExtension(serviceName) {
+
+        function requestExtension(serviceName) {
             const code = document.getElementById('code').value.trim() || 'неизвестен';
             const text = `🔁 Запрос на продление\nПароль: ${code}\nУслуга: ${serviceName}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
             fetch(`https://ntfy.sh/${NTFY_TOPIC}`, {
                 method: 'POST',
                 body: text
             }).catch(err => console.error('Ошибка отправки:', err));
-            alert('Запрос на продление отправлен. Попробуйте снова через 12 часов.');
+            logEvent(code, 'extension_request', serviceName);
+            alert('Запрос на продление отправлен. Ссылки активируем через 12 часов.');
         }
-                async function logStatistic(code, service, action) {
+    </script>
+
+    <!-- Скрытая статистика -->
+    <div id="stats-section" style="display:none; text-align:center; margin-top:40px;">
+        <button onclick="showStats()" style="padding:8px 16px; font-size:12px; background:#888; color:white; border:none; border-radius:4px; cursor:pointer;">
+            📊 Показать статистику
+        </button>
+        <div id="stats-output" style="margin-top:10px; font-size:12px; color:#555; text-align:left; max-width:500px; margin-left:auto; margin-right:auto;"></div>
+    </div>
+    <script>
+        // Тройной клик для открытия статистики
+        let clickCount = 0;
+        let clickTimer = null;
+        document.addEventListener('click', function(e) {
+            clickCount++;
+            if (clickCount === 1) {
+                clickTimer = setTimeout(() => { clickCount = 0; }, 1000);
+            }
+            if (clickCount >= 3) {
+                clearTimeout(clickTimer);
+                clickCount = 0;
+                document.getElementById('stats-section').style.display = 'block';
+            }
+        });
+
+        async function showStats() {
+            const output = document.getElementById('stats-output');
+            output.innerHTML = 'Загрузка...';
             try {
-                const url = FILE_NAME + '?ts=' + new Date().getTime();
-                const response = await fetch(url);
-                if (!response.ok) return;
-                const arrayBuffer = await response.arrayBuffer();
-                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-                
-                // Читаем лист Статистика (если его нет, создаём)
-                let statsSheet = workbook.Sheets['Статистика'];
-                if (!statsSheet) {
-                    statsSheet = XLSX.utils.aoa_to_sheet([['Время', 'Пароль', 'Услуга', 'Действие']]);
-                    workbook.SheetNames.push('Статистика');
-                    workbook.Sheets['Статистика'] = statsSheet;
+                const resp = await fetch(JSONBIN_URL + '/latest', {
+                    headers: { 'X-Access-Key': JSONBIN_KEY }
+                });
+                const data = await resp.json();
+                const events = data.record.events || [];
+                if (events.length === 0) {
+                    output.innerHTML = '<p>Статистика пуста.</p>';
+                    return;
                 }
-                
-                // Преобразуем в массив
-                const statsData = XLSX.utils.sheet_to_json(statsSheet, { header: 1, defval: '' });
-                
-                // Добавляем новую строку
-                const now = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
-                statsData.push([now, code, service, action]);
-                
-                // Обновляем лист
-                const newSheet = XLSX.utils.aoa_to_sheet(statsData);
-                workbook.Sheets['Статистика'] = newSheet;
-                
-                // Сохраняем обратно на GitHub (НЕВОЗМОЖНО из браузера)
-                // Поэтому мы сохраняем в localStorage как резерв
-                const key = 'stats_' + FILE_NAME;
-                const stored = JSON.parse(localStorage.getItem(key) || '[]');
-                stored.push({ time: now, code, service, action });
-                localStorage.setItem(key, JSON.stringify(stored));
-                
-                console.log('Статистика обновлена (локально):', now, code, service, action);
+                let html = '<table style="width:100%; border-collapse:collapse; font-size:11px;">';
+                html += '<tr><th>Время</th><th>Пароль</th><th>Действие</th><th>Детали</th></tr>';
+                // Показываем последние 100 событий
+                const recent = events.slice(-100).reverse();
+                for (const ev of recent) {
+                    html += `<tr>
+                        <td>${ev.time}</td>
+                        <td>${ev.code}</td>
+                        <td>${ev.action}</td>
+                        <td>${ev.details || ''}</td>
+                    </tr>`;
+                }
+                html += '</table>';
+                output.innerHTML = html;
             } catch (err) {
-                console.error('Ошибка записи статистики:', err);
+                output.innerHTML = '<p>Ошибка загрузки статистики.</p>';
+                console.error(err);
             }
         }
     </script>
-          <!-- Скрытая кнопка статистики (появляется после тройного клика) -->
-        <div id="stats-section" style="display:none; text-align:center; margin-top:40px;">
-            <button onclick="showStats()" style="padding:8px 16px; font-size:12px; background:#888; color:white; border:none; border-radius:4px; cursor:pointer;">
-                📊 Моя статистика
-            </button>
-            <div id="stats-output" style="margin-top:10px; font-size:12px; color:#555; text-align:left; max-width:500px; margin-left:auto; margin-right:auto;"></div>
-        </div>
-
-        <script>
-            // Тройной клик для открытия статистики
-            let clickCount = 0;
-            let clickTimer = null;
-            document.addEventListener('click', function(e) {
-                clickCount++;
-                if (clickCount === 1) {
-                    clickTimer = setTimeout(() => { clickCount = 0; }, 1000);
-                }
-                if (clickCount >= 3) {
-                    clearTimeout(clickTimer);
-                    clickCount = 0;
-                    document.getElementById('stats-section').style.display = 'block';
-                }
-            });
-
-            function showStats() {
-                const key = 'stats_' + FILE_NAME;
-                const stored = JSON.parse(localStorage.getItem(key) || '[]');
-                const output = document.getElementById('stats-output');
-                if (stored.length === 0) {
-                    output.innerHTML = '<p>Статистика пуста.</p>';
-                } else {
-                    let html = '<table style="width:100%; border-collapse:collapse; font-size:11px;">';
-                    html += '<tr><th>Время</th><th>Пароль</th><th>Услуга</th><th>Действие</th></tr>';
-                    stored.reverse().forEach(s => {
-                        html += `<tr><td>${s.time}</td><td>${s.code}</td><td>${s.service}</td><td>${s.action}</td></tr>`;
-                    });
-                    html += '</table>';
-                    output.innerHTML = html;
-                }
-            }
-        </script>
 </body>
 </html>
