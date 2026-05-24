@@ -103,6 +103,20 @@
             margin-top: 10px;
         }
         button:hover { background: #43a047; }
+                input[type="date"],
+        input[type="time"] {
+            padding: 12px;
+            font-size: 16px;
+            width: 100%;
+            max-width: 340px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        input[type="text"] {
+            box-sizing: border-box;
+        }
         .phone-link {
             font-size: 20px;
             font-weight: bold;
@@ -255,9 +269,13 @@
 
         loadExcel();
 
-        async function checkCode() {
+                async function checkCode() {
             const code = document.getElementById('code').value.trim();
             if (!code) return;
+
+            // === СЧЁТЧИК НЕВЕРНЫХ ПОПЫТОК (localStorage) ===
+            const STORAGE_KEY = 'failed_attempts_' + code;
+            let failedCount = parseInt(localStorage.getItem(STORAGE_KEY) || '0');
 
             try {
                 const url = FILE_NAME + '?ts=' + new Date().getTime();
@@ -282,14 +300,30 @@
             }
 
             const now = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
+
             if (matchedRows.length === 0) {
+                // Увеличиваем счётчик неверных попыток
+                failedCount++;
+                localStorage.setItem(STORAGE_KEY, failedCount);
+
                 logEvent(code, 'attempt', 'Неверный пароль');
                 const text = `❌ Неверный пароль\nПароль: ${code}\nВремя: ${now}`;
                 fetch(`https://ntfy.sh/${NTFY_TOPIC}`, { method: 'POST', body: text })
                     .catch(err => console.error(err));
-                alert('Неверный пароль!');
+
+                // Если 3 попытки — показываем форму обратной связи
+                if (failedCount >= 3) {
+                    localStorage.removeItem(STORAGE_KEY); // сбрасываем счётчик
+                    showContactForm(code);
+                    return;
+                }
+
+                alert(`Неверный пароль! Осталось попыток: ${3 - failedCount}`);
                 return;
             }
+
+            // Пароль верный — сбрасываем счётчик
+            localStorage.removeItem(STORAGE_KEY);
 
             const allItems = [];
             const seenLinks = new Set();
@@ -451,6 +485,56 @@
                 output.innerHTML = '<p>Ошибка загрузки статистики.</p>';
                 console.error(err);
             }
+        }
+            // === ФОРМА ОБРАТНОЙ СВЯЗИ ===
+        function showContactForm(code) {
+            document.getElementById('form-block').style.display = 'none';
+            document.getElementById('result-block').style.display = 'block';
+            document.getElementById('merge-warning').style.display = 'none';
+
+            const container = document.getElementById('links-list');
+            container.innerHTML = `
+                <div style="background:#fff; border-radius:12px; padding:25px; text-align:left;">
+                    <h3 style="text-align:center; color:#333; margin-bottom:20px;">Пароль не найден</h3>
+                    <p style="text-align:center; color:#666;">Пожалуйста, укажите ваши данные.</p>
+                    <p style="text-align:center; color:#666;">Мы уточним информацию и свяжемся с вами.</p>
+                    
+                    <label style="display:block; margin-top:15px; font-weight:bold;">Дата сплава:</label>
+                    <input type="date" id="contact-date" style="width:100%; padding:10px; margin-top:5px; border:1px solid #ccc; border-radius:6px;">
+                    
+                    <label style="display:block; margin-top:15px; font-weight:bold;">Время сплава:</label>
+                    <input type="time" id="contact-time" style="width:100%; padding:10px; margin-top:5px; border:1px solid #ccc; border-radius:6px;">
+                    
+                    <label style="display:block; margin-top:15px; font-weight:bold;">Фамилия клиента (кто подписывал договор):</label>
+                    <input type="text" id="contact-surname" placeholder="Фамилия" style="width:100%; padding:10px; margin-top:5px; border:1px solid #ccc; border-radius:6px;">
+                    
+                    <button onclick="submitContactForm('${code}')" style="width:100%; margin-top:20px; padding:12px; background:#4CAF50; color:white; border:none; border-radius:8px; font-size:16px; cursor:pointer;">
+                        Отправить
+                    </button>
+                </div>`;
+        }
+
+        function submitContactForm(code) {
+            const date = document.getElementById('contact-date').value || 'не указано';
+            const time = document.getElementById('contact-time').value || 'не указано';
+            const surname = document.getElementById('contact-surname').value.trim() || 'не указано';
+
+            const text = `📋 Новый запрос\nПароль: ${code}\nДата сплава: ${date}\nВремя сплава: ${time}\nФамилия: ${surname}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+
+            // Отправляем уведомление вам
+            fetch(`https://ntfy.sh/${NTFY_TOPIC}`, {
+                method: 'POST',
+                body: text
+            }).catch(err => console.error('Ошибка отправки:', err));
+
+            logEvent(code, 'contact_form', `${date} / ${time} / ${surname}`);
+
+            // Показываем благодарность
+            document.getElementById('links-list').innerHTML = `
+                <div style="background:#fff; border-radius:12px; padding:30px; text-align:center;">
+                    <h3 style="color:#4CAF50;">✅ Спасибо!</h3>
+                    <p style="color:#666; margin-top:15px;">Мы уточним данные и напишем по номеру, который указан в договоре, в течение 12 часов!</p>
+                </div>`;
         }
     </script>
 </body>
