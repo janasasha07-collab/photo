@@ -103,20 +103,6 @@
             margin-top: 10px;
         }
         button:hover { background: #43a047; }
-                input[type="date"],
-        input[type="time"] {
-            padding: 12px;
-            font-size: 16px;
-            width: 100%;
-            max-width: 340px;
-            margin: 5px 0;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            box-sizing: border-box;
-        }
-        input[type="text"] {
-            box-sizing: border-box;
-        }
         .phone-link {
             font-size: 20px;
             font-weight: bold;
@@ -141,7 +127,7 @@
             </div>
             <div style="margin-top: 25px;">
                 <a href="https://disk.yandex.ru/i/MQbv36Vu4b6ZKw" target="_blank"
-                    onclick="logEvent('', 'promo', 'Рафтинг на 1 канале'); sendNotification('', 0, 'Промо-ролик')"
+                    onclick="sendNotification('', 0, 'Промо-ролик')"
                     style="display: inline-flex; align-items: center; gap: 12px;
                           background: rgba(0,0,0,0.03); border: 1px solid #ddd;
                           border-radius: 50px; padding: 10px 25px; text-decoration: none;
@@ -170,13 +156,13 @@
                 <div style="text-align:center; margin-top:20px;">
                     <p>⭐ Оставьте, пожалуйста, ваш отзыв о нашей компании:</p>
                     <a href="https://yandex.ru/profile/1679432297" target="_blank"
-                       onclick="logEvent('', 'review_yandex', 'Яндекс'); sendNotification('', 0, 'Яндекс')"
+                       onclick="sendNotification('', 0, 'Яндекс')"
                        style="display:inline-block; padding:12px 25px; background:#FFD700; color:#333;
                               font-weight:bold; text-decoration:none; border-radius:8px; margin:5px;">
                         Яндекс
                     </a>
                     <a href="https://go.2gis.com/DNqhS" target="_blank"
-                       onclick="logEvent('', 'review_2gis', '2ГИС'); sendNotification('', 0, '2ГИС')"
+                       onclick="sendNotification('', 0, '2ГИС')"
                        style="display:inline-block; padding:12px 25px; background:#FFD700; color:#333;
                               font-weight:bold; text-decoration:none; border-radius:8px; margin:5px;">
                         2ГИС
@@ -190,43 +176,9 @@
     </div>
 
     <script>
-        // Ваши данные JSONbin
-        const JSONBIN_URL = 'https://api.jsonbin.io/v3/b/6a129fa06877513b27c3503e';
-        const JSONBIN_KEY = '$2a$10$DdMJpY.P8AIX6l9oM6CzJ.8YkL9wTv.l8AVjilcl3vYVh8opicPy6';
-
         const NTFY_TOPIC = 'PolinaPhoto2026';
         const FILE_NAME = 'ФОТО дрон яндекс ссылки.xlsx';
         let csvData = [];
-
-        async function logEvent(code, action, details = '') {
-            try {
-                const now = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
-                const getResp = await fetch(JSONBIN_URL + '/latest', {
-                    headers: { 'X-Access-Key': JSONBIN_KEY }
-                });
-                const data = await getResp.json();
-                const events = data.record.events || [];
-
-                events.push({
-                    time: now,
-                    code: code || '—',
-                    action: action,
-                    details: details
-                });
-
-                await fetch(JSONBIN_URL, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Access-Key': JSONBIN_KEY
-                    },
-                    body: JSON.stringify({ events: events })
-                });
-                console.log('Событие записано:', { code, action, details });
-            } catch (err) {
-                console.error('Ошибка записи события:', err);
-            }
-        }
 
         function sendNotification(code, itemCount, eventType) {
             let text = '';
@@ -269,11 +221,10 @@
 
         loadExcel();
 
-                async function checkCode() {
+        async function checkCode() {
             const code = document.getElementById('code').value.trim();
             if (!code) return;
 
-            // === СЧЁТЧИК НЕВЕРНЫХ ПОПЫТОК (localStorage) ===
             const STORAGE_KEY = 'failed_attempts_' + code;
             let failedCount = parseInt(localStorage.getItem(STORAGE_KEY) || '0');
 
@@ -302,18 +253,15 @@
             const now = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
 
             if (matchedRows.length === 0) {
-                // Увеличиваем счётчик неверных попыток
                 failedCount++;
                 localStorage.setItem(STORAGE_KEY, failedCount);
 
-                logEvent(code, 'attempt', 'Неверный пароль');
                 const text = `❌ Неверный пароль\nПароль: ${code}\nВремя: ${now}`;
                 fetch(`https://ntfy.sh/${NTFY_TOPIC}`, { method: 'POST', body: text })
                     .catch(err => console.error(err));
 
-                // Если 3 попытки — показываем форму обратной связи
                 if (failedCount >= 3) {
-                    localStorage.removeItem(STORAGE_KEY); // сбрасываем счётчик
+                    localStorage.removeItem(STORAGE_KEY);
                     showContactForm(code);
                     return;
                 }
@@ -322,7 +270,6 @@
                 return;
             }
 
-            // Пароль верный — сбрасываем счётчик
             localStorage.removeItem(STORAGE_KEY);
 
             const allItems = [];
@@ -364,7 +311,6 @@
                             method: 'POST',
                             body: expiredText
                         }).catch(err => console.error('Ошибка отправки:', err));
-                        logEvent(code, 'expired', name);
                     }
 
                     allItems.push({
@@ -377,11 +323,9 @@
 
             if (allItems.length === 0) {
                 alert('Для этого пароля нет загруженных файлов.');
-                logEvent(code, 'success', 'Нет файлов');
                 return;
             }
 
-            logEvent(code, 'success', 'Вход выполнен');
             sendNotification(code, allItems.length, 'success');
             showResult(allItems, matchedRows.length > 1);
         }
@@ -414,8 +358,7 @@
                                 <div class="link-name">${item.name}</div>
                                 <div style="font-size:13px; color:#888; word-break:break-all;">${item.link}</div>
                             </div>
-                            <a class="btn" href="${item.link}" target="_blank"
-                               onclick="logEvent('${currentCode}', 'link_click', '${item.name}')">Перейти</a>
+                            <a class="btn" href="${item.link}" target="_blank">Перейти</a>
                         </div>`;
                 }
             }
@@ -428,65 +371,9 @@
                 method: 'POST',
                 body: text
             }).catch(err => console.error('Ошибка отправки:', err));
-            logEvent(code, 'extension_request', serviceName);
             alert('Запрос на продление отправлен. Ссылки будут доступны через 12 часов.');
         }
-    </script>
 
-    <!-- Скрытая статистика -->
-    <div id="stats-section" style="display:none; text-align:center; margin-top:40px;">
-        <button onclick="showStats()" style="padding:8px 16px; font-size:12px; background:#888; color:white; border:none; border-radius:4px; cursor:pointer;">
-            📊 Показать статистику
-        </button>
-        <div id="stats-output" style="margin-top:10px; font-size:12px; color:#555; text-align:left; max-width:500px; margin-left:auto; margin-right:auto;"></div>
-    </div>
-    <script>
-        let clickCount = 0;
-        let clickTimer = null;
-        document.addEventListener('click', function(e) {
-            clickCount++;
-            if (clickCount === 1) {
-                clickTimer = setTimeout(() => { clickCount = 0; }, 1000);
-            }
-            if (clickCount >= 3) {
-                clearTimeout(clickTimer);
-                clickCount = 0;
-                document.getElementById('stats-section').style.display = 'block';
-            }
-        });
-
-        async function showStats() {
-            const output = document.getElementById('stats-output');
-            output.innerHTML = 'Загрузка...';
-            try {
-                const resp = await fetch(JSONBIN_URL + '/latest', {
-                    headers: { 'X-Access-Key': JSONBIN_KEY }
-                });
-                const data = await resp.json();
-                const events = data.record.events || [];
-                if (events.length === 0) {
-                    output.innerHTML = '<p>Статистика пуста.</p>';
-                    return;
-                }
-                let html = '<table style="width:100%; border-collapse:collapse; font-size:11px;">';
-                html += '<tr><th>Время</th><th>Пароль</th><th>Действие</th><th>Детали</th></tr>';
-                const recent = events.slice(-100).reverse();
-                for (const ev of recent) {
-                    html += `<tr>
-                        <td>${ev.time}</td>
-                        <td>${ev.code}</td>
-                        <td>${ev.action}</td>
-                        <td>${ev.details || ''}</td>
-                    </tr>`;
-                }
-                html += '</table>';
-                output.innerHTML = html;
-            } catch (err) {
-                output.innerHTML = '<p>Ошибка загрузки статистики.</p>';
-                console.error(err);
-            }
-        }
-            // === ФОРМА ОБРАТНОЙ СВЯЗИ ===
         function showContactForm(code) {
             document.getElementById('form-block').style.display = 'none';
             document.getElementById('result-block').style.display = 'block';
@@ -521,15 +408,11 @@
 
             const text = `📋 Новый запрос\nПароль: ${code}\nДата сплава: ${date}\nВремя сплава: ${time}\nФамилия: ${surname}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
 
-            // Отправляем уведомление вам
             fetch(`https://ntfy.sh/${NTFY_TOPIC}`, {
                 method: 'POST',
                 body: text
             }).catch(err => console.error('Ошибка отправки:', err));
 
-            logEvent(code, 'contact_form', `${date} / ${time} / ${surname}`);
-
-            // Показываем благодарность
             document.getElementById('links-list').innerHTML = `
                 <div style="background:#fff; border-radius:12px; padding:30px; text-align:center;">
                     <h3 style="color:#4CAF50;">✅ Спасибо!</h3>
