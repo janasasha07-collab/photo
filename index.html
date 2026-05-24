@@ -11,16 +11,11 @@
             text-align: center;
             margin: 0;
             padding: 40px 10px;
-            background: url('background.jpg?v=2') no-repeat center center fixed;
-            background-size: cover;
+            background: #f2f4f8;
         }
         .container {
             max-width: 500px;
             margin: 0 auto;
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            padding: 30px 20px;
         }
         .logo {
             max-width: 120px;
@@ -181,7 +176,7 @@
     </div>
 
     <script>
-        // ⚠️ Замените на свои реальные данные JSONbin
+        // Ваши данные JSONbin
         const JSONBIN_URL = 'https://api.jsonbin.io/v3/b/6a129163ee5a733b120e3e02';
         const JSONBIN_KEY = '$2a$10$6CkH8BE7SIotWUGwgP/hSuqLP6aa2dUi.567cCK555ivfdy4gnipm';
 
@@ -189,18 +184,15 @@
         const FILE_NAME = 'ФОТО дрон яндекс ссылки.xlsx';
         let csvData = [];
 
-        // === Функция записи события в JSONbin ===
         async function logEvent(code, action, details = '') {
             try {
                 const now = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
-                // Получаем текущий массив событий
                 const getResp = await fetch(JSONBIN_URL + '/latest', {
                     headers: { 'X-Access-Key': JSONBIN_KEY }
                 });
                 const data = await getResp.json();
                 const events = data.record.events || [];
 
-                // Добавляем новое событие
                 events.push({
                     time: now,
                     code: code || '—',
@@ -208,7 +200,6 @@
                     details: details
                 });
 
-                // Сохраняем обратно
                 await fetch(JSONBIN_URL, {
                     method: 'PUT',
                     headers: {
@@ -223,7 +214,6 @@
             }
         }
 
-        // === Уведомления в ntfy ===
         function sendNotification(code, itemCount, eventType) {
             let text = '';
             const now = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
@@ -293,7 +283,6 @@
 
             const now = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
             if (matchedRows.length === 0) {
-                // Неверный пароль
                 logEvent(code, 'attempt', 'Неверный пароль');
                 const text = `❌ Неверный пароль\nПароль: ${code}\nВремя: ${now}`;
                 fetch(`https://ntfy.sh/${NTFY_TOPIC}`, { method: 'POST', body: text })
@@ -406,7 +395,7 @@
                 body: text
             }).catch(err => console.error('Ошибка отправки:', err));
             logEvent(code, 'extension_request', serviceName);
-            alert('Запрос на продление отправлен. Ссылки активируем через 12 часов.');
+            alert('Запрос на продление отправлен. Ссылки будут доступны через 12 часов.');
         }
     </script>
 
@@ -418,7 +407,6 @@
         <div id="stats-output" style="margin-top:10px; font-size:12px; color:#555; text-align:left; max-width:500px; margin-left:auto; margin-right:auto;"></div>
     </div>
     <script>
-        // Тройной клик для открытия статистики
         let clickCount = 0;
         let clickTimer = null;
         document.addEventListener('click', function(e) {
@@ -448,7 +436,6 @@
                 }
                 let html = '<table style="width:100%; border-collapse:collapse; font-size:11px;">';
                 html += '<tr><th>Время</th><th>Пароль</th><th>Действие</th><th>Детали</th></tr>';
-                // Показываем последние 100 событий
                 const recent = events.slice(-100).reverse();
                 for (const ev of recent) {
                     html += `<tr>
