@@ -110,15 +110,27 @@
             text-decoration: none;
         }
         .phone-link:hover { color: #4CAF50; }
-            .faq-section {
-            margin-top: 30px;
+
+        /* FAQ */
+        .faq-section {
+            margin-top: 20px;
             text-align: left;
+        }
+        .faq-header {
+            font-size: 22px;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .faq-header span {
+            margin: 0 10px;
         }
         .faq-item {
             background: white;
             border-radius: 8px;
             margin-bottom: 8px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
         }
         .faq-question {
             width: 100%;
@@ -153,45 +165,29 @@
         }
         .arrow.open {
             transform: rotate(180deg);
-        }</style>
+        }
+    </style>
 </head>
 <body>
     <div class="container">
+        <!-- ======================== СТРАНИЦА ВВОДА ПАРОЛЯ ======================== -->
         <div id="form-block">
             <img class="logo" src="logo1.png" alt="Логотип" loading="eager" decoding="async">
             <h2>Введите пароль для получения фото/видео файлов</h2>
             <input type="text" id="code" placeholder="последние 5 цифр тел. в договоре" autofocus>
             <br>
             <button onclick="checkCode()">Получить ссылку</button>
-            <hr class="divider" style="margin-top:30px;">
-            <div style="text-align:center; margin-top:15px;">
+
+            <hr class="divider" style="margin-top:25px;">
+            <div style="text-align:center; margin-top:10px;">
                 <p style="font-size:16px; color:#555;">Номер для связи и бронирования:</p>
                 <a href="tel:+79182969617" class="phone-link">+7 (918) 296-96-17 Полина</a>
             </div>
-            <div style="margin-top: 25px;">
-                <a href="https://disk.yandex.ru/i/MQbv36Vu4b6ZKw" target="_blank"
-                    onclick="sendNotification('', 0, 'Промо-ролик')"
-                    style="display: inline-flex; align-items: center; gap: 12px;
-                          background: rgba(0,0,0,0.03); border: 1px solid #ddd;
-                          border-radius: 50px; padding: 10px 25px; text-decoration: none;
-                          color: #666; font-size: 16px; transition: 0.3s;">
-                    <span style="font-size: 24px;">🎬</span>
-                    <span>Рафтинг на 1 канале. Передача "Доброе утро!"</span>
-                </a>
-            </div>
-        </div>
 
-        <div id="result-block" style="display:none;">
-            <div class="links-container">
-                <div class="red-warning" style="font-size:22px; margin-bottom:5px;">ВНИМАНИЕ!!!</div>
-                <div class="red-warning" style="font-size:18px; margin-bottom:5px;">Доступ к файлам</div>
-                <div class="red-warning" style="font-size:18px; margin-bottom:25px;">открыт на 14 дней</div>
-                <div id="merge-warning" class="info-text" style="display:none;">
-                    ℹ️ Найдено несколько заказов с одинаковым паролем. Все доступные материалы объединены.
-                </div>
-                <div id="links-list"></div>
-                <hr class="divider">
+            <!-- FAQ на странице ввода пароля -->
+            <hr class="divider">
             <div class="faq-section">
+                <div class="faq-header">▼ FAQ ▼</div>
                 <div class="faq-item">
                     <button class="faq-question" onclick="toggleFaq(this)">
                         <span>Как получить фото/видео?</span>
@@ -256,6 +252,19 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- ======================== СТРАНИЦА СО ССЫЛКАМИ ======================== -->
+        <div id="result-block" style="display:none;">
+            <div class="links-container">
+                <div class="red-warning" style="font-size:22px; margin-bottom:5px;">ВНИМАНИЕ!!!</div>
+                <div class="red-warning" style="font-size:18px; margin-bottom:5px;">Доступ к файлам</div>
+                <div class="red-warning" style="font-size:18px; margin-bottom:25px;">открыт на 14 дней</div>
+                <div id="merge-warning" class="info-text" style="display:none;">
+                    ℹ️ Найдено несколько заказов с одинаковым паролем. Все доступные материалы объединены.
+                </div>
+                <div id="links-list"></div>
+                <hr class="divider">
                 <div style="text-align:center; margin-top:15px;">
                     <p style="font-size:16px; color:#555;">Номер для связи и бронирования:</p>
                     <a href="tel:+79182969617" class="phone-link">+7 (918) 296-96-17 Полина</a>
@@ -276,77 +285,43 @@
                         2ГИС
                     </a>
                 </div>
+
+                <!-- FAQ на странице ссылок (только нужные вопросы) -->
+                <hr class="divider">
+                <div class="faq-section">
+                    <div class="faq-item">
+                        <button class="faq-question" onclick="toggleFaq(this)">
+                            <span>Сколько дней хранятся файлы?</span>
+                            <span class="arrow">▼</span>
+                        </button>
+                        <div class="faq-answer">
+                            Ссылки активны 14 дней. Рекомендуем скачать все материалы сразу после получения.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <button class="faq-question" onclick="toggleFaq(this)">
+                            <span>Что делать, если срок истёк?</span>
+                            <span class="arrow">▼</span>
+                        </button>
+                        <div class="faq-answer">
+                            Нажмите кнопку «Запросить продление» под истёкшей ссылкой, и мы восстановим доступ.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <button class="faq-question" onclick="toggleFaq(this)">
+                            <span>Как оставить отзыв?</span>
+                            <span class="arrow">▼</span>
+                        </button>
+                        <div class="faq-answer">
+                            Вы можете оставить отзыв на Яндекс или 2ГИС, нажав на кнопки выше.
+                        </div>
+                    </div>
+                </div>
             </div>
             <p style="margin-top:25px;">
                 <a href="?" onclick="location.reload()" style="color:#4CAF50;">Ввести другой пароль</a>
             </p>
         </div>
-                    <hr class="divider">
-            <div class="faq-section">
-                <div class="faq-item">
-                    <button class="faq-question" onclick="toggleFaq(this)">
-                        <span>Как получить фото/видео?</span>
-                        <span class="arrow">▼</span>
-                    </button>
-                    <div class="faq-answer">
-                        Введите последние 5 цифр телефона из договора. Если заказ оформлен, вы увидите кнопки для скачивания.
-                    </div>
-                </div>
-                <div class="faq-item">
-                    <button class="faq-question" onclick="toggleFaq(this)">
-                        <span>Почему не подходит пароль?</span>
-                        <span class="arrow">▼</span>
-                    </button>
-                    <div class="faq-answer">
-                        Пароль – это последние 5 цифр номера телефона, указанного в договоре. Проверьте, тот ли номер вы используете. После 3 неверных попыток появится форма связи с нами.
-                    </div>
-                </div>
-                <div class="faq-item">
-                    <button class="faq-question" onclick="toggleFaq(this)">
-                        <span>Через сколько после сплава можно скачать материалы?</span>
-                        <span class="arrow">▼</span>
-                    </button>
-                    <div class="faq-answer">
-                        Через 24 часа после вашего сплава. Иногда из-за высокой загрузки материалы могут быть недоступны до 72 часов.
-                    </div>
-                </div>
-                <div class="faq-item">
-                    <button class="faq-question" onclick="toggleFaq(this)">
-                        <span>Сколько дней хранятся файлы?</span>
-                        <span class="arrow">▼</span>
-                    </button>
-                    <div class="faq-answer">
-                        Ссылки активны 14 дней. Рекомендуем скачать все материалы сразу после получения.
-                    </div>
-                </div>
-                <div class="faq-item">
-                    <button class="faq-question" onclick="toggleFaq(this)">
-                        <span>Что делать, если срок истёк?</span>
-                        <span class="arrow">▼</span>
-                    </button>
-                    <div class="faq-answer">
-                        Нажмите кнопку «Запросить продление» под истёкшей ссылкой, и мы восстановим доступ.
-                    </div>
-                </div>
-                <div class="faq-item">
-                    <button class="faq-question" onclick="toggleFaq(this)">
-                        <span>Как оставить отзыв?</span>
-                        <span class="arrow">▼</span>
-                    </button>
-                    <div class="faq-answer">
-                        После успешного входа появятся кнопки «Яндекс» и «2ГИС» – перейдите по ним и поделитесь впечатлениями.
-                    </div>
-                </div>
-                <div class="faq-item">
-                    <button class="faq-question" onclick="toggleFaq(this)">
-                        <span>Кому звонить, если вопросы?</span>
-                        <span class="arrow">▼</span>
-                    </button>
-                    <div class="faq-answer">
-                        Звоните Полине по номеру <a href="tel:+79182969617" style="color:#4CAF50;">+7 (918) 296-96-17</a>.
-                    </div>
-                </div>
-            </div>
     </div>
 
     <script>
@@ -358,9 +333,7 @@
             let text = '';
             const now = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
 
-            if (eventType === 'Промо-ролик') {
-                text = `🎬 Клиент перешёл на промо-ролик\nВремя: ${now}`;
-            } else if (eventType === 'Яндекс') {
+            if (eventType === 'Яндекс') {
                 text = `⭐ Клиент перешёл на отзыв Яндекс\nВремя: ${now}`;
             } else if (eventType === '2ГИС') {
                 text = `⭐ Клиент перешёл на отзыв 2ГИС\nВремя: ${now}`;
@@ -593,7 +566,8 @@
                     <p style="color:#666; margin-top:15px;">Мы уточним данные и напишем по номеру, который указан в договоре, в течение 12 часов!</p>
                 </div>`;
         }
-            function toggleFaq(btn) {
+
+        function toggleFaq(btn) {
             const answer = btn.nextElementSibling;
             const arrow = btn.querySelector('.arrow');
             answer.classList.toggle('open');
