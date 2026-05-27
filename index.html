@@ -468,7 +468,14 @@
                 }
             }
 
-            if (allItems.length === 0) {
+                        if (allItems.length === 0) {
+                // Уведомление о входе без ссылок
+                const noFilesText = `📭 Клиент вошёл, но файлы отсутствуют\nПароль: ${code}\nВремя: ${now}`;
+                fetch(`https://ntfy.sh/${NTFY_TOPIC}`, {
+                    method: 'POST',
+                    body: noFilesText
+                }).catch(err => console.error('Ошибка отправки:', err));
+
                 alert('Для этого пароля нет загруженных файлов.');
                 return;
             }
