@@ -232,6 +232,15 @@
                     <div class="faq-answer">
                         Нажмите кнопку «Запросить продление» под истёкшей ссылкой и, если с даты сплава прошло не более 30 дней, мы восстановим доступ.
                     </div>
+                <hr class="divider">
+                <div style="text-align:center;">
+                <button class="feedback-btn" onclick="toggleFeedbackForm()">💬 Связь с нами</button>
+                <div id="feedback-form" class="feedback-form" style="display:none; margin-top:10px;">
+                    <textarea id="feedback-msg" placeholder="Ваше сообщение..." rows="3" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;"></textarea>
+                    <button onclick="sendFeedback()" style="margin-top:8px; width:100%; padding:10px; background:#4CAF50; color:white; border:none; border-radius:6px; font-size:15px; cursor:pointer;">Отправить</button>
+                </div>
+                <div id="feedback-result" style="margin-top:10px; color:#4CAF50; font-weight:bold;"></div>
+            </div>
                 </div>
                 <div class="faq-item">
                     <button class="faq-question" onclick="toggleFaq(this)">
@@ -317,6 +326,14 @@
                         </div>
                     </div>
                 </div>
+                        <div style="text-align:center; margin-top:20px;">
+                <button class="feedback-btn" onclick="toggleFeedbackForm()">💬 Связь с нами</button>
+                <div id="feedback-form2" class="feedback-form" style="display:none; margin-top:10px;">
+                    <textarea id="feedback-msg2" placeholder="Ваше сообщение..." rows="3" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;"></textarea>
+                    <button onclick="sendFeedback2()" style="margin-top:8px; width:100%; padding:10px; background:#4CAF50; color:white; border:none; border-radius:6px; font-size:15px; cursor:pointer;">Отправить</button>
+                </div>
+                <div id="feedback-result2" style="margin-top:10px; color:#4CAF50; font-weight:bold;"></div>
+            </div>
             </div>
             <p style="margin-top:25px;">
                 <a href="?" onclick="location.reload()" style="color:#4CAF50;">Ввести другой пароль</a>
@@ -593,6 +610,38 @@
                     <p style="font-size:20px; color:#333; font-weight:bold; margin-bottom:10px;">Упс…</p>
                     <p style="font-size:16px; color:#888;">к сожалению файлы ещё грузятся…</p>
                 </div>`;
+        }
+            function toggleFeedbackForm() {
+            const form = document.getElementById('feedback-form');
+            if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
+            const form2 = document.getElementById('feedback-form2');
+            if (form2) form2.style.display = form2.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function sendFeedback() {
+            const msg = document.getElementById('feedback-msg').value.trim();
+            if (!msg) { alert('Введите сообщение'); return; }
+            const code = document.getElementById('code').value.trim() || 'без пароля';
+            const text = `💬 Сообщение от клиента\nПароль: ${code}\nСообщение: ${msg}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+            fetch(`https://ntfy.sh/${NTFY_TOPIC}`, { method: 'POST', body: text })
+                .then(() => {
+                    document.getElementById('feedback-form').style.display = 'none';
+                    document.getElementById('feedback-result').innerText = '✅ Спасибо! Ваше сообщение отправлено.';
+                })
+                .catch(err => console.error('Ошибка отправки:', err));
+        }
+
+        function sendFeedback2() {
+            const msg = document.getElementById('feedback-msg2').value.trim();
+            if (!msg) { alert('Введите сообщение'); return; }
+            const code = document.getElementById('code').value.trim() || 'без пароля';
+            const text = `💬 Сообщение от клиента\nПароль: ${code}\nСообщение: ${msg}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+            fetch(`https://ntfy.sh/${NTFY_TOPIC}`, { method: 'POST', body: text })
+                .then(() => {
+                    document.getElementById('feedback-form2').style.display = 'none';
+                    document.getElementById('feedback-result2').innerText = '✅ Спасибо! Ваше сообщение отправлено.';
+                })
+                .catch(err => console.error('Ошибка отправки:', err));
         }
     </script>
 </body>
