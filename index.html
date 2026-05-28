@@ -409,7 +409,10 @@
 
             const matchedRows = [];
             for (let i = 1; i < csvData.length; i++) {
-                if (String(csvData[i][0]).trim() === code) {
+                const rawCode = String(csvData[i][0] || '').trim();
+                // Пропускаем строки, где пароль начинается с /
+                if (rawCode.startsWith('/')) continue;
+                if (rawCode === code) {
                     matchedRows.push(csvData[i]);
                 }
             }
