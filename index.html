@@ -499,7 +499,17 @@
             }
 
             sendNotification(code, allItems.length, 'success');
-            showResult(allItems, matchedRows.length > 1);
+                        // Уведомление, если заказы объединены
+            const isMerged = matchedRows.length > 1;
+            if (isMerged) {
+                const mergedText = `ℹ️ Объединены заказы\nПароль: ${code}\nКоличество строк: ${matchedRows.length}\nВремя: ${now}`;
+                fetch(`https://ntfy.sh/${NTFY_TOPIC}`, {
+                    method: 'POST',
+                    body: mergedText
+                }).catch(err => console.error('Ошибка отправки:', err));
+            }
+
+            showResult(allItems, isMerged);
         }
 
         function showResult(items, isMerged) {
