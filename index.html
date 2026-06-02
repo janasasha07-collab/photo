@@ -572,13 +572,14 @@
                                 </button>
                             </div>
                         </div>`;
-                } else if (item.isPreview) {
+                                } else if (item.isPreview) {
                     const price = SERVICE_PRICES[item.name] || '';
                     container.innerHTML += `
                         <div class="link-item" style="background:#fffbf0; border:1px solid #ffd54f;">
                             <div style="flex:1;">
                                 <div class="link-name">${item.name}</div>
-                                ${price ? `<div style="font-size:14px; color:#f57c00; font-weight:bold; margin-bottom:8px;">Цена: ${price}</div>` : ''}
+                                <div style="font-size:14px; color:#f57c00; font-weight:bold; margin-bottom:4px;">Доступно для дозаказа</div>
+                                ${price ? `<div style="font-size:14px; color:#f57c00; margin-bottom:8px;">Цена: ${price}</div>` : ''}
                                 <button onclick="showRepurchaseForm('${item.name}')" style="padding:6px 14px; font-size:13px; background:#ff9800; color:white; border:none; border-radius:4px; cursor:pointer;">
                                     🔒 Дозаказать
                                 </button>
