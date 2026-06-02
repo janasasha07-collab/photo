@@ -166,11 +166,31 @@
         .arrow.open {
             transform: rotate(180deg);
         }
+        .feedback-btn {
+            display: inline-block;
+            padding: 10px 24px;
+            font-size: 15px;
+            background: #5B8C5A;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        .feedback-btn:hover { background: #4a7a49; }
+        .feedback-form {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+            text-align: left;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- ======================== СТРАНИЦА ВВОДА ПАРОЛЯ ======================== -->
+        <!-- СТРАНИЦА ВВОДА ПАРОЛЯ -->
         <div id="form-block">
             <img class="logo" src="logo1.png" alt="Логотип" loading="eager" decoding="async">
             <h2>Введите пароль для получения фото/видео файлов</h2>
@@ -252,8 +272,10 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Кнопка обратной связи -->
             <hr class="divider">
-                <div style="text-align:center;">
+            <div style="text-align:center;">
                 <button class="feedback-btn" onclick="toggleFeedbackForm()">💬 Связь с нами</button>
                 <div id="feedback-form" class="feedback-form" style="display:none; margin-top:10px;">
                     <textarea id="feedback-msg" placeholder="Ваше сообщение..." rows="3" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;"></textarea>
@@ -263,7 +285,7 @@
             </div>
         </div>
 
-        <!-- ======================== СТРАНИЦА СО ССЫЛКАМИ ======================== -->
+        <!-- СТРАНИЦА СО ССЫЛКАМИ -->
         <div id="result-block" style="display:none;">
             <div class="links-container">
                 <div class="red-warning" style="font-size:22px; margin-bottom:5px;">ВНИМАНИЕ!!!</div>
@@ -295,7 +317,7 @@
                     </a>
                 </div>
 
-                <!-- FAQ на странице ссылок (только нужные вопросы) -->
+                <!-- FAQ на странице ссылок -->
                 <hr class="divider">
                 <div class="faq-section">
                     <div class="faq-item">
@@ -326,14 +348,16 @@
                         </div>
                     </div>
                 </div>
-                        <div style="text-align:center; margin-top:20px;">
-                <button class="feedback-btn" onclick="toggleFeedbackForm()">💬 Связь с нами</button>
-                <div id="feedback-form2" class="feedback-form" style="display:none; margin-top:10px;">
-                    <textarea id="feedback-msg2" placeholder="Ваше сообщение..." rows="3" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;"></textarea>
-                    <button onclick="sendFeedback2()" style="margin-top:8px; width:100%; padding:10px; background:#4CAF50; color:white; border:none; border-radius:6px; font-size:15px; cursor:pointer;">Отправить</button>
+
+                <!-- Кнопка обратной связи -->
+                <div style="text-align:center; margin-top:20px;">
+                    <button class="feedback-btn" onclick="toggleFeedbackForm()">💬 Связь с нами</button>
+                    <div id="feedback-form2" class="feedback-form" style="display:none; margin-top:10px;">
+                        <textarea id="feedback-msg2" placeholder="Ваше сообщение..." rows="3" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;"></textarea>
+                        <button onclick="sendFeedback2()" style="margin-top:8px; width:100%; padding:10px; background:#4CAF50; color:white; border:none; border-radius:6px; font-size:15px; cursor:pointer;">Отправить</button>
+                    </div>
+                    <div id="feedback-result2" style="margin-top:10px; color:#4CAF50; font-weight:bold;"></div>
                 </div>
-                <div id="feedback-result2" style="margin-top:10px; color:#4CAF50; font-weight:bold;"></div>
-            </div>
             </div>
             <p style="margin-top:25px;">
                 <a href="?" onclick="location.reload()" style="color:#4CAF50;">Ввести другой пароль</a>
@@ -410,7 +434,6 @@
             const matchedRows = [];
             for (let i = 1; i < csvData.length; i++) {
                 const rawCode = String(csvData[i][0] || '').trim();
-                // Пропускаем строки, где пароль начинается с /
                 if (rawCode.startsWith('/')) continue;
                 if (rawCode === code) {
                     matchedRows.push(csvData[i]);
@@ -448,8 +471,14 @@
                     if (!raw) continue;
 
                     let expired = false;
+                    let isPreview = false;
+
                     if (raw.startsWith('!')) {
                         expired = true;
+                        raw = raw.substring(1).trim();
+                        if (!raw || !raw.startsWith('http')) continue;
+                    } else if (raw.startsWith('?')) {
+                        isPreview = true;
                         raw = raw.substring(1).trim();
                         if (!raw || !raw.startsWith('http')) continue;
                     }
@@ -468,7 +497,7 @@
                     if (!link.startsWith('http')) continue;
                     if (!name) name = 'Папка ' + (allItems.length + 1);
 
-                    const uniqueKey = expired ? 'EXPIRED:' + name : link;
+                    const uniqueKey = (expired ? 'EXPIRED:' : (isPreview ? 'PREVIEW:' : '')) + name;
                     if (seenLinks.has(uniqueKey)) continue;
                     seenLinks.add(uniqueKey);
 
@@ -483,26 +512,23 @@
                     allItems.push({
                         link: link,
                         name: name,
-                        expired: expired
+                        expired: expired,
+                        isPreview: isPreview
                     });
                 }
             }
 
-                                   if (allItems.length === 0) {
-                // Уведомление о входе без ссылок
+            if (allItems.length === 0) {
                 const noFilesText = `📭 Клиент вошёл, но файлы отсутствуют\nПароль: ${code}\nВремя: ${now}`;
                 fetch(`https://ntfy.sh/${NTFY_TOPIC}`, {
                     method: 'POST',
                     body: noFilesText
                 }).catch(err => console.error('Ошибка отправки:', err));
 
-                // Показываем страницу со специальным сообщением
                 showNoFilesMessage();
                 return;
             }
 
-            sendNotification(code, allItems.length, 'success');
-                        // Уведомление, если заказы объединены
             const isMerged = matchedRows.length > 1;
             if (isMerged) {
                 const mergedText = `ℹ️ Объединены заказы\nПароль: ${code}\nКоличество строк: ${matchedRows.length}\nВремя: ${now}`;
@@ -512,6 +538,7 @@
                 }).catch(err => console.error('Ошибка отправки:', err));
             }
 
+            sendNotification(code, allItems.length, 'success');
             showResult(allItems, isMerged);
         }
 
@@ -533,6 +560,17 @@
                                 <div style="font-size:14px; color:red; font-weight:bold; margin-bottom:8px;">Срок доступа истёк</div>
                                 <button onclick="requestExtension('${item.name}')" style="padding:6px 14px; font-size:13px; background:#ff9800; color:white; border:none; border-radius:4px; cursor:pointer;">
                                     Запросить продление
+                                </button>
+                            </div>
+                        </div>`;
+                } else if (item.isPreview) {
+                    container.innerHTML += `
+                        <div class="link-item" style="background:#fffbf0; border:1px solid #ffd54f;">
+                            <div style="flex:1;">
+                                <div class="link-name">${item.name}</div>
+                                <div style="font-size:14px; color:#f57c00; font-weight:bold; margin-bottom:8px;">Доступно для дозаказа</div>
+                                <button onclick="showRepurchaseForm('${item.name}')" style="padding:6px 14px; font-size:13px; background:#ff9800; color:white; border:none; border-radius:4px; cursor:pointer;">
+                                    🔒 Дозаказать
                                 </button>
                             </div>
                         </div>`;
@@ -605,13 +643,7 @@
                 </div>`;
         }
 
-        function toggleFaq(btn) {
-            const answer = btn.nextElementSibling;
-            const arrow = btn.querySelector('.arrow');
-            answer.classList.toggle('open');
-            arrow.classList.toggle('open');
-        }
-            function showNoFilesMessage() {
+        function showNoFilesMessage() {
             document.getElementById('form-block').style.display = 'none';
             document.getElementById('result-block').style.display = 'block';
             document.getElementById('merge-warning').style.display = 'none';
@@ -624,7 +656,53 @@
                     <p style="font-size:16px; color:#888;">к сожалению файлы ещё грузятся…</p>
                 </div>`;
         }
-            function toggleFeedbackForm() {
+
+        function showRepurchaseForm(serviceName) {
+            const container = document.getElementById('links-list');
+            container.innerHTML = `
+                <div style="background:#fff; border-radius:12px; padding:25px; text-align:left;">
+                    <h3 style="text-align:center; color:#333; margin-bottom:20px;">Дозаказ услуги "${serviceName}"</h3>
+                    <p style="text-align:center; color:#666;">Пожалуйста, укажите ваш номер телефона.</p>
+                    <p style="text-align:center; color:#666;">Мы проверим возможность дозаказа и пришлём вам СМС в течение 12 часов.</p>
+                    
+                    <label style="display:block; margin-top:15px; font-weight:bold;">Номер телефона для связи *</label>
+                    <input type="tel" id="repurchase-phone" placeholder="+7 (___) ___-__-__" required style="width:100%; padding:10px; margin-top:5px; border:1px solid #ccc; border-radius:6px;">
+                    
+                    <button onclick="submitRepurchase('${serviceName}')" style="width:100%; margin-top:20px; padding:12px; background:#4CAF50; color:white; border:none; border-radius:8px; font-size:16px; cursor:pointer;">
+                        Отправить заявку
+                    </button>
+                    <p style="font-size:12px; color:#999; margin-top:8px;">* — обязательное поле</p>
+                </div>`;
+        }
+
+        function submitRepurchase(serviceName) {
+            const phone = document.getElementById('repurchase-phone').value.trim();
+            if (!phone) {
+                alert('Пожалуйста, укажите номер телефона. Это обязательно.');
+                return;
+            }
+            const code = document.getElementById('code').value.trim() || 'неизвестен';
+            const text = `🛒 Запрос на дозаказ\nПароль: ${code}\nУслуга: ${serviceName}\nТелефон: ${phone}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+            
+            fetch(`https://ntfy.sh/${NTFY_TOPIC}`, { method: 'POST', body: text })
+                .then(() => {
+                    document.getElementById('links-list').innerHTML = `
+                        <div style="background:#fff; border-radius:12px; padding:30px; text-align:center;">
+                            <h3 style="color:#4CAF50;">✅ Спасибо!</h3>
+                            <p style="color:#666; margin-top:15px;">В течение 12 часов мы проверим возможность дозаказа и пришлём вам СМС на указанный номер.</p>
+                        </div>`;
+                })
+                .catch(err => console.error('Ошибка отправки:', err));
+        }
+
+        function toggleFaq(btn) {
+            const answer = btn.nextElementSibling;
+            const arrow = btn.querySelector('.arrow');
+            answer.classList.toggle('open');
+            arrow.classList.toggle('open');
+        }
+
+        function toggleFeedbackForm() {
             const form = document.getElementById('feedback-form');
             if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
             const form2 = document.getElementById('feedback-form2');
@@ -638,24 +716,4 @@
             const text = `💬 Сообщение от клиента\nПароль: ${code}\nСообщение: ${msg}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
             fetch(`https://ntfy.sh/${NTFY_TOPIC}`, { method: 'POST', body: text })
                 .then(() => {
-                    document.getElementById('feedback-form').style.display = 'none';
-                    document.getElementById('feedback-result').innerText = '✅ Спасибо! Ваше сообщение отправлено.';
-                })
-                .catch(err => console.error('Ошибка отправки:', err));
-        }
-
-        function sendFeedback2() {
-            const msg = document.getElementById('feedback-msg2').value.trim();
-            if (!msg) { alert('Введите сообщение'); return; }
-            const code = document.getElementById('code').value.trim() || 'без пароля';
-            const text = `💬 Сообщение от клиента\nПароль: ${code}\nСообщение: ${msg}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
-            fetch(`https://ntfy.sh/${NTFY_TOPIC}`, { method: 'POST', body: text })
-                .then(() => {
-                    document.getElementById('feedback-form2').style.display = 'none';
-                    document.getElementById('feedback-result2').innerText = '✅ Спасибо! Ваше сообщение отправлено.';
-                })
-                .catch(err => console.error('Ошибка отправки:', err));
-        }
-    </script>
-</body>
-</html>
+                    document.getElementById('feedback-form').style
