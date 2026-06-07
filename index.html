@@ -418,7 +418,7 @@
 
         loadExcel();
 
-        async function checkCode() {
+                async function checkCode() {
             const code = document.getElementById('code').value.trim();
             if (!code) return;
 
@@ -440,12 +440,25 @@
                 return;
             }
 
+            // Строим карту дат (формат "6 июня")
+            const dateMap = {};
+            let lastDate = null;
+            for (let i = 1; i < csvData.length; i++) {
+                const firstCell = String(csvData[i][0] || '').trim();
+                if (/^\d{2}[\/\.]\d{2}$/.test(firstCell)) {
+                    lastDate = formatDate(firstCell);
+                }
+                dateMap[i] = lastDate;
+            }
+
+            // Собираем строки с нужным паролем (пропускаем строки с датами и отключённые)
             const matchedRows = [];
             for (let i = 1; i < csvData.length; i++) {
                 const rawCode = String(csvData[i][0] || '').trim();
                 if (rawCode.startsWith('/')) continue;
+                if (/^\d{2}[\/\.]\d{2}$/.test(rawCode)) continue; // это строка с датой, не пароль
                 if (rawCode === code) {
-                    matchedRows.push(csvData[i]);
+                    matchedRows.push({ row: csvData[i], index: i });
                 }
             }
 
@@ -474,7 +487,11 @@
             const allItems = [];
             const seenLinks = new Set();
 
-            for (const row of matchedRows) {
+            for (const item of matchedRows) {
+                const row = item.row;
+                const rowIndex = item.index;
+                const rowDate = dateMap[rowIndex] || '';
+
                 for (let c = 2; c < row.length; c++) {
                     let raw = String(row[c] || '').trim();
                     if (!raw) continue;
@@ -506,7 +523,7 @@
                     if (!link.startsWith('http')) continue;
                     if (!name) name = 'Папка ' + (allItems.length + 1);
 
-                    const uniqueKey = (expired ? 'EXPIRED:' : (isPreview ? 'PREVIEW:' : '')) + name;
+                    const uniqueKey = (expired ? 'EXPIRED:' : (isPreview ? 'PREVIEW:' : '')) + name + rowDate;
                     if (seenLinks.has(uniqueKey)) continue;
                     seenLinks.add(uniqueKey);
 
@@ -522,7 +539,8 @@
                         link: link,
                         name: name,
                         expired: expired,
-                        isPreview: isPreview
+                        isPreview: isPreview,
+                        rowDate: rowDate
                     });
                 }
             }
@@ -749,6 +767,17 @@
                     document.getElementById('feedback-result2').innerText = '✅ Спасибо! Ваше сообщение отправлено.';
                 })
                 .catch(err => console.error('Ошибка отправки:', err));
+        }
+                function formatDate(raw) {
+            // raw ожидается в формате дд/мм или дд.мм
+            const parts = raw.split(/[\/\.]/);
+            if (parts.length !== 2) return raw;
+            const day = parseInt(parts[0], 10);
+            const monthNum = parseInt(parts[1], 10);
+            const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+                           'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+            if (isNaN(day) || monthNum < 1 || monthNum > 12) return raw;
+            return day + ' ' + months[monthNum - 1];
         }
     </script>
 </body>
