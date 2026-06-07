@@ -289,8 +289,7 @@
         <div id="result-block" style="display:none;">
             <div class="links-container">
                 <div class="red-warning" style="font-size:22px; margin-bottom:5px;">ВНИМАНИЕ!!!</div>
-                <div class="red-warning" style="font-size:18px; margin-bottom:5px;">Доступ к файлам</div>
-                <div class="red-warning" style="font-size:18px; margin-bottom:25px;">открыт на 14 дней</div>
+                <div class="red-warning" style="font-size:18px; margin-bottom:25px;">Доступ к файлам открыт на 14 дней</div>
                 <div id="merge-warning" class="info-text" style="display:none;">
                     ℹ️ Найдено несколько заказов с одинаковым паролем. Все доступные материалы объединены.
                 </div>
@@ -418,7 +417,19 @@
 
         loadExcel();
 
-                async function checkCode() {
+        // Преобразование даты из формата дд/мм или дд.мм в "день месяц"
+        function formatDate(raw) {
+            const parts = raw.split(/[\/\.]/);
+            if (parts.length !== 2) return raw;
+            const day = parseInt(parts[0], 10);
+            const monthNum = parseInt(parts[1], 10);
+            const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+                           'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+            if (isNaN(day) || monthNum < 1 || monthNum > 12) return raw;
+            return day + ' ' + months[monthNum - 1];
+        }
+
+        async function checkCode() {
             const code = document.getElementById('code').value.trim();
             if (!code) return;
 
@@ -440,7 +451,7 @@
                 return;
             }
 
-            // Строим карту дат (формат "6 июня")
+            // Карта дат: последняя встреченная дата-строка применяется ко всем строкам ниже
             const dateMap = {};
             let lastDate = null;
             for (let i = 1; i < csvData.length; i++) {
@@ -451,12 +462,12 @@
                 dateMap[i] = lastDate;
             }
 
-            // Собираем строки с нужным паролем (пропускаем строки с датами и отключённые)
+            // Собираем строки с паролями (игнорируем даты и отключённые)
             const matchedRows = [];
             for (let i = 1; i < csvData.length; i++) {
                 const rawCode = String(csvData[i][0] || '').trim();
                 if (rawCode.startsWith('/')) continue;
-                if (/^\d{2}[\/\.]\d{2}$/.test(rawCode)) continue; // это строка с датой, не пароль
+                if (/^\d{2}[\/\.]\d{2}$/.test(rawCode)) continue;
                 if (rawCode === code) {
                     matchedRows.push({ row: csvData[i], index: i });
                 }
@@ -579,23 +590,30 @@
             const currentCode = document.getElementById('code').value.trim() || 'неизвестен';
 
             for (const item of items) {
+                let dateStr = '';
+                if (item.rowDate) {
+                    dateStr = `<div style="font-size:13px; color:#888; margin-bottom:5px;">📅 ${item.rowDate}</div>`;
+                }
+
                 if (item.expired) {
                     container.innerHTML += `
                         <div class="link-item" style="background:#fff5f5; border:1px solid #ffcccc;">
                             <div>
                                 <div class="link-name">${item.name}</div>
+                                ${dateStr}
                                 <div style="font-size:14px; color:red; font-weight:bold; margin-bottom:8px;">Срок доступа истёк</div>
                                 <button onclick="requestExtension('${item.name}')" style="padding:6px 14px; font-size:13px; background:#ff9800; color:white; border:none; border-radius:4px; cursor:pointer;">
                                     Запросить продление
                                 </button>
                             </div>
                         </div>`;
-                                } else if (item.isPreview) {
+                } else if (item.isPreview) {
                     const price = SERVICE_PRICES[item.name] || '';
                     container.innerHTML += `
                         <div class="link-item" style="background:#fffbf0; border:1px solid #ffd54f;">
                             <div style="flex:1;">
                                 <div class="link-name">${item.name}</div>
+                                ${dateStr}
                                 <div style="font-size:14px; color:#f57c00; font-weight:bold; margin-bottom:4px;">Доступно для дозаказа</div>
                                 ${price ? `<div style="font-size:14px; color:#f57c00; margin-bottom:8px;">Цена: ${price}</div>` : ''}
                                 <button onclick="showRepurchaseForm('${item.name}')" style="padding:6px 14px; font-size:13px; background:#ff9800; color:white; border:none; border-radius:4px; cursor:pointer;">
@@ -608,6 +626,7 @@
                         <div class="link-item">
                             <div>
                                 <div class="link-name">${item.name}</div>
+                                ${dateStr}
                                 <div style="font-size:13px; color:#888; word-break:break-all;">${item.link}</div>
                             </div>
                             <a class="btn" href="${item.link}" target="_blank">Перейти</a>
@@ -767,17 +786,6 @@
                     document.getElementById('feedback-result2').innerText = '✅ Спасибо! Ваше сообщение отправлено.';
                 })
                 .catch(err => console.error('Ошибка отправки:', err));
-        }
-                function formatDate(raw) {
-            // raw ожидается в формате дд/мм или дд.мм
-            const parts = raw.split(/[\/\.]/);
-            if (parts.length !== 2) return raw;
-            const day = parseInt(parts[0], 10);
-            const monthNum = parseInt(parts[1], 10);
-            const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
-                           'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-            if (isNaN(day) || monthNum < 1 || monthNum > 12) return raw;
-            return day + ' ' + months[monthNum - 1];
         }
     </script>
 </body>
