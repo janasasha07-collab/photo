@@ -364,7 +364,7 @@
         </div>
     </div>
 
-    <script>
+       <script>
         // Цены на услуги
         const SERVICE_PRICES = {
             'Фото': '1500 руб.',
@@ -451,7 +451,7 @@
                 return;
             }
 
-            // Карта дат: последняя встреченная дата-строка применяется ко всем строкам ниже
+            // Карта дат
             const dateMap = {};
             let lastDate = null;
             for (let i = 1; i < csvData.length; i++) {
@@ -462,20 +462,31 @@
                 dateMap[i] = lastDate;
             }
 
-            // Собираем строки с паролями (игнорируем даты и отключённые)
-            const matchedRows = [];
+            // Собираем строки: активные (обычные) и истекшие (с /?)
+            const activeRows = [];
+            const expiredRows = [];
             for (let i = 1; i < csvData.length; i++) {
-                const rawCode = String(csvData[i][0] || '').trim();
-                if (rawCode.startsWith('/')) continue;
-                if (/^\d{2}[\/\.]\d{2}$/.test(rawCode)) continue;
+                let rawCode = String(csvData[i][0] || '').trim();
+                if (rawCode.startsWith('/')) {
+                    // Проверяем, не истекший ли пароль: /?xxxx
+                    if (rawCode.startsWith('/?')) {
+                        const realCode = rawCode.substring(2).trim();
+                        if (realCode === code) {
+                            expiredRows.push({ row: csvData[i], index: i });
+                        }
+                    }
+                    continue;
+                }
+                if (/^\d{2}[\/\.]\d{2}$/.test(rawCode)) continue; // дата
                 if (rawCode === code) {
-                    matchedRows.push({ row: csvData[i], index: i });
+                    activeRows.push({ row: csvData[i], index: i });
                 }
             }
 
             const now = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
 
-            if (matchedRows.length === 0) {
+            // Если нет ни активных, ни истекших – неверный пароль
+            if (activeRows.length === 0 && expiredRows.length === 0) {
                 failedCount++;
                 localStorage.setItem(STORAGE_KEY, failedCount);
 
@@ -495,10 +506,22 @@
 
             localStorage.removeItem(STORAGE_KEY);
 
+            // Если есть только истекшие строки и нет активных – показываем сообщение об истечении
+            if (activeRows.length === 0 && expiredRows.length > 0) {
+                const expiredText = `⏳ Клиент вошёл по истёкшему паролю\nПароль: ${code}\nВремя: ${now}`;
+                fetch(`https://ntfy.sh/${NTFY_TOPIC}`, {
+                    method: 'POST',
+                    body: expiredText
+                }).catch(err => console.error('Ошибка отправки:', err));
+                showExpiredPasswordMessage();
+                return;
+            }
+
+            // Работаем с активными строками (как раньше)
             const allItems = [];
             const seenLinks = new Set();
 
-            for (const item of matchedRows) {
+            for (const item of activeRows) {
                 const row = item.row;
                 const rowIndex = item.index;
                 const rowDate = dateMap[rowIndex] || '';
@@ -567,9 +590,9 @@
                 return;
             }
 
-            const isMerged = matchedRows.length > 1;
+            const isMerged = activeRows.length > 1;
             if (isMerged) {
-                const mergedText = `ℹ️ Объединены заказы\nПароль: ${code}\nКоличество строк: ${matchedRows.length}\nВремя: ${now}`;
+                const mergedText = `ℹ️ Объединены заказы\nПароль: ${code}\nКоличество строк: ${activeRows.length}\nВремя: ${now}`;
                 fetch(`https://ntfy.sh/${NTFY_TOPIC}`, {
                     method: 'POST',
                     body: mergedText
@@ -702,6 +725,20 @@
                     <div style="font-size:48px; margin-bottom:20px;">⏳</div>
                     <p style="font-size:20px; color:#333; font-weight:bold; margin-bottom:10px;">Упс…</p>
                     <p style="font-size:16px; color:#888;">к сожалению файлы ещё грузятся…</p>
+                </div>`;
+        }
+
+        function showExpiredPasswordMessage() {
+            document.getElementById('form-block').style.display = 'none';
+            document.getElementById('result-block').style.display = 'block';
+            document.getElementById('merge-warning').style.display = 'none';
+
+            const container = document.getElementById('links-list');
+            container.innerHTML = `
+                <div style="text-align:center; padding:40px 20px; background:#fff; border-radius:12px;">
+                    <div style="font-size:48px; margin-bottom:20px;">⏳</div>
+                    <p style="font-size:20px; color:#333; font-weight:bold; margin-bottom:10px;">К сожалению</p>
+                    <p style="font-size:16px; color:#888;">сроки доступа Вашего пароля истекли</p>
                 </div>`;
         }
 
