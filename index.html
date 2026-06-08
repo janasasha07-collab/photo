@@ -295,6 +295,17 @@
                 </div>
                 <div id="links-list"></div>
                 <hr class="divider">
+                <!-- СНАЧАЛА "СВЯЗЬ С НАМИ" -->
+                <div style="text-align:center; margin-top:20px;">
+                    <button class="feedback-btn" onclick="toggleFeedbackForm()">💬 Связь с нами</button>
+                    <div id="feedback-form2" class="feedback-form" style="display:none; margin-top:10px;">
+                        <textarea id="feedback-msg2" placeholder="Ваше сообщение..." rows="3" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;"></textarea>
+                        <button onclick="sendFeedback2()" style="margin-top:8px; width:100%; padding:10px; background:#4CAF50; color:white; border:none; border-radius:6px; font-size:15px; cursor:pointer;">Отправить</button>
+                    </div>
+                    <div id="feedback-result2" style="margin-top:10px; color:#4CAF50; font-weight:bold;"></div>
+                </div>
+                <hr class="divider">
+                <!-- ПОТОМ НОМЕР ТЕЛЕФОНА -->
                 <div style="text-align:center; margin-top:15px;">
                     <p style="font-size:16px; color:#555;">Номер для связи и бронирования:</p>
                     <a href="tel:+79182969617" class="phone-link">+7 (918) 296-96-17 Полина</a>
@@ -347,16 +358,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Кнопка обратной связи -->
-                <div style="text-align:center; margin-top:20px;">
-                    <button class="feedback-btn" onclick="toggleFeedbackForm()">💬 Связь с нами</button>
-                    <div id="feedback-form2" class="feedback-form" style="display:none; margin-top:10px;">
-                        <textarea id="feedback-msg2" placeholder="Ваше сообщение..." rows="3" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;"></textarea>
-                        <button onclick="sendFeedback2()" style="margin-top:8px; width:100%; padding:10px; background:#4CAF50; color:white; border:none; border-radius:6px; font-size:15px; cursor:pointer;">Отправить</button>
-                    </div>
-                    <div id="feedback-result2" style="margin-top:10px; color:#4CAF50; font-weight:bold;"></div>
-                </div>
             </div>
             <p style="margin-top:25px;">
                 <a href="?" onclick="location.reload()" style="color:#4CAF50;">Ввести другой пароль</a>
@@ -364,7 +365,7 @@
         </div>
     </div>
 
-       <script>
+    <script>
         // Цены на услуги
         const SERVICE_PRICES = {
             'Фото': '1500 руб.',
@@ -468,7 +469,6 @@
             for (let i = 1; i < csvData.length; i++) {
                 let rawCode = String(csvData[i][0] || '').trim();
                 if (rawCode.startsWith('/')) {
-                    // Проверяем, не истекший ли пароль: /?xxxx
                     if (rawCode.startsWith('/?')) {
                         const realCode = rawCode.substring(2).trim();
                         if (realCode === code) {
@@ -477,7 +477,7 @@
                     }
                     continue;
                 }
-                if (/^\d{2}[\/\.]\d{2}$/.test(rawCode)) continue; // дата
+                if (/^\d{2}[\/\.]\d{2}$/.test(rawCode)) continue;
                 if (rawCode === code) {
                     activeRows.push({ row: csvData[i], index: i });
                 }
@@ -485,7 +485,6 @@
 
             const now = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
 
-            // Если нет ни активных, ни истекших – неверный пароль
             if (activeRows.length === 0 && expiredRows.length === 0) {
                 failedCount++;
                 localStorage.setItem(STORAGE_KEY, failedCount);
@@ -506,7 +505,6 @@
 
             localStorage.removeItem(STORAGE_KEY);
 
-            // Если есть только истекшие строки и нет активных – показываем сообщение об истечении
             if (activeRows.length === 0 && expiredRows.length > 0) {
                 const expiredText = `⏳ Клиент вошёл по истёкшему паролю\nПароль: ${code}\nВремя: ${now}`;
                 fetch(`https://ntfy.sh/${NTFY_TOPIC}`, {
@@ -517,7 +515,6 @@
                 return;
             }
 
-            // Работаем с активными строками (как раньше)
             const allItems = [];
             const seenLinks = new Set();
 
@@ -647,15 +644,26 @@
                 } else {
                     container.innerHTML += `
                         <div class="link-item">
-                            <div>
+                            <div style="flex:1;">
                                 <div class="link-name">${item.name}</div>
                                 ${dateStr}
                                 <div style="font-size:13px; color:#888; word-break:break-all;">${item.link}</div>
                             </div>
-                            <a class="btn" href="${item.link}" target="_blank">Перейти</a>
+                            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                                <a class="btn" href="${item.link}" target="_blank">Перейти</a>
+                                <button onclick="reportWrongLink('${item.name}')" style="padding:6px 12px; font-size:13px; background:#d9534f; color:white; border:none; border-radius:4px; cursor:pointer;" title="Сообщить об ошибочной ссылке">Не моё</button>
+                            </div>
                         </div>`;
                 }
             }
+        }
+
+        function reportWrongLink(serviceName) {
+            const code = document.getElementById('code').value.trim() || 'неизвестен';
+            const text = `⚠️ Клиент сообщил: не его материалы\nПароль: ${code}\nУслуга: ${serviceName}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+            fetch(`https://ntfy.sh/${NTFY_TOPIC}`, { method: 'POST', body: text })
+                .then(() => alert('Спасибо! Мы проверим ссылку.'))
+                .catch(err => console.error('Ошибка отправки:', err));
         }
 
         function requestExtension(serviceName) {
