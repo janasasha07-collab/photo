@@ -826,13 +826,20 @@
             if (!msg) { alert('Введите сообщение'); return; }
             const code = document.getElementById('code').value.trim() || 'без пароля';
             const text = `💬 Сообщение от клиента\nПароль: ${code}\nСообщение: ${msg}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+                  function sendFeedback() {
+            const phone = document.getElementById('feedback-phone').value.trim();
+            if (!phone) {
+                alert('Пожалуйста, укажите номер телефона. Это обязательно.');
+                return;
+            }
+            const msg = document.getElementById('feedback-msg').value.trim();
+            if (!msg) { alert('Введите сообщение'); return; }
+            const code = document.getElementById('code').value.trim() || 'без пароля';
+            const text = `💬 Сообщение от клиента\nПароль: ${code}\nТелефон: ${phone}\nСообщение: ${msg}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
             fetch(`https://ntfy.sh/${NTFY_TOPIC}`, { method: 'POST', body: text })
                 .then(() => {
-                    document.getElementById('feedback-form2').style.display = 'none';
-                    document.getElementById('feedback-result2').innerText = '✅ Спасибо! Ваше сообщение отправлено.';
+                    document.getElementById('feedback-form').style.display = 'none';
+                    document.getElementById('feedback-result').innerText = '✅ Спасибо! Ваше сообщение отправлено.';
                 })
                 .catch(err => console.error('Ошибка отправки:', err));
         }
-    </script>
-</body>
-</html>
