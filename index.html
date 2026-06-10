@@ -278,8 +278,12 @@
             <div style="text-align:center;">
                 <button class="feedback-btn" onclick="toggleFeedbackForm()">💬 Связь с нами</button>
                 <div id="feedback-form" class="feedback-form" style="display:none; margin-top:10px;">
-                    <input type="tel" id="feedback-phone" placeholder="+7 (___) ___-__-__" style="width:100%; padding:10px; margin-bottom:8px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;">
-                    <textarea id="feedback-msg" placeholder="Ваше сообщение..." rows="3" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;"></textarea>
+                    <label style="display:block; margin-top:15px; font-weight:bold;">Номер телефона для связи *</label>
+                    <div style="display:flex; align-items:center; margin-top:5px;">
+                        <span style="padding:10px; background:#eee; border:1px solid #ccc; border-radius:6px 0 0 6px; font-size:16px;">+7</span>
+                        <input type="tel" id="feedback-phone" placeholder="(___) ___-__-__" required style="flex:1; padding:10px; border:1px solid #ccc; border-left:none; border-radius:0 6px 6px 0; font-size:16px;">
+                    </div>
+                    <textarea id="feedback-msg" placeholder="Ваше сообщение..." rows="3" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box; margin-top:8px;"></textarea>
                     <button onclick="sendFeedback()" style="margin-top:8px; width:100%; padding:10px; background:#4CAF50; color:white; border:none; border-radius:6px; font-size:15px; cursor:pointer;">Отправить</button>
                 </div>
                 <div id="feedback-result" style="margin-top:10px; color:#4CAF50; font-weight:bold;"></div>
@@ -809,15 +813,17 @@
         }
 
         function sendFeedback() {
-            const phone = document.getElementById('feedback-phone').value.trim();
+            const phoneInput = document.getElementById('feedback-phone');
+            const phone = phoneInput.value.trim();
             if (!phone) {
                 alert('Пожалуйста, укажите номер телефона. Это обязательно.');
                 return;
             }
+            const fullPhone = '+7' + phone;
             const msg = document.getElementById('feedback-msg').value.trim();
             if (!msg) { alert('Введите сообщение'); return; }
             const code = document.getElementById('code').value.trim() || 'без пароля';
-            const text = `💬 Сообщение от клиента\nПароль: ${code}\nТелефон: ${phone}\nСообщение: ${msg}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+            const text = `💬 Сообщение от клиента\nПароль: ${code}\nТелефон: ${fullPhone}\nСообщение: ${msg}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
             fetch(`https://ntfy.sh/${NTFY_TOPIC}`, { method: 'POST', body: text })
                 .then(() => {
                     document.getElementById('feedback-form').style.display = 'none';
