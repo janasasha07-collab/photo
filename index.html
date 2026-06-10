@@ -186,15 +186,6 @@
             text-align: left;
             box-shadow: 0 2px 6px rgba(0,0,0,0.05);
         }
-        /* Стиль для превью */
-        .preview-img {
-            width: 100px;
-            height: 70px;
-            object-fit: cover;
-            border-radius: 4px;
-            pointer-events: none;
-            user-select: none;
-        }
     </style>
 </head>
 <body>
@@ -444,15 +435,6 @@
             return day + ' ' + months[monthNum - 1];
         }
 
-        // Извлечение ссылок превью из строки с разделителем ||
-        function extractPreviewLinks(raw) {
-            const parts = raw.split('||').map(s => s.trim());
-            // Первый элемент – основная ссылка (или может быть пустым), остальные – превью
-            const previews = parts.slice(1).filter(link => link.startsWith('http'));
-            const mainLink = parts[0].startsWith('http') ? parts[0] : '';
-            return { mainLink, previews };
-        }
-
         async function checkCode() {
             const code = document.getElementById('code').value.trim();
             if (!code) return;
@@ -552,8 +534,6 @@
 
                     let expired = false;
                     let isPreview = false;
-                    let mainLink = '';
-                    let previewLinks = [];
 
                     if (raw.startsWith('!')) {
                         expired = true;
@@ -563,13 +543,9 @@
                         isPreview = true;
                         raw = raw.substring(1).trim();
                         if (!raw || !raw.startsWith('http')) continue;
-                        // Извлекаем основную ссылку и превью
-                        const extracted = extractPreviewLinks(raw);
-                        mainLink = extracted.mainLink || raw; // если нет разделителя, вся строка – основная ссылка
-                        previewLinks = extracted.previews;
                     }
 
-                    let link = isPreview ? mainLink : raw;
+                    let link = raw;
                     let name = '';
 
                     if (link.includes('|')) {
@@ -600,8 +576,7 @@
                         name: name,
                         expired: expired,
                         isPreview: isPreview,
-                        rowDate: rowDate,
-                        previews: previewLinks
+                        rowDate: rowDate
                     });
                 }
             }
@@ -659,20 +634,11 @@
                         </div>`;
                 } else if (item.isPreview) {
                     const price = SERVICE_PRICES[item.name] || '';
-                    let galleryHTML = '';
-                    if (item.previews && item.previews.length > 0) {
-                        galleryHTML = `<div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;">`;
-                        item.previews.forEach(img => {
-                            galleryHTML += `<img src="${img}" class="preview-img" oncontextmenu="return false;" ondragstart="return false;" alt="preview">`;
-                        });
-                        galleryHTML += `</div>`;
-                    }
                     container.innerHTML += `
                         <div class="link-item" style="background:#fffbf0; border:1px solid #ffd54f;">
                             <div style="flex:1;">
                                 <div class="link-name">${item.name}</div>
                                 ${dateStr}
-                                ${galleryHTML}
                                 <div style="font-size:14px; color:#f57c00; font-weight:bold; margin-bottom:4px;">Доступно для дозаказа</div>
                                 ${price ? `<div style="font-size:14px; color:#f57c00; margin-bottom:8px;">Цена: ${price}</div>` : ''}
                                 <button onclick="showRepurchaseForm('${item.name}')" style="padding:6px 14px; font-size:13px; background:#ff9800; color:white; border:none; border-radius:4px; cursor:pointer;">
