@@ -277,7 +277,8 @@
             <hr class="divider">
             <div style="text-align:center;">
                 <button class="feedback-btn" onclick="toggleFeedbackForm()">💬 Связь с нами</button>
-                <div id="feedback-form" class="feedback-form" style="display:none; margin-top:10px;">
+                                <div id="feedback-form" class="feedback-form" style="display:none; margin-top:10px;">
+                    <input type="tel" id="feedback-phone" placeholder="+7 (___) ___-__-__" style="width:100%; padding:10px; margin-bottom:8px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;">
                     <textarea id="feedback-msg" placeholder="Ваше сообщение..." rows="3" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;"></textarea>
                     <button onclick="sendFeedback()" style="margin-top:8px; width:100%; padding:10px; background:#4CAF50; color:white; border:none; border-radius:6px; font-size:15px; cursor:pointer;">Отправить</button>
                 </div>
