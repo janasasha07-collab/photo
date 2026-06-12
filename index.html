@@ -613,7 +613,7 @@
             const container = document.getElementById('links-list');
             container.innerHTML = '';
             const currentCode = document.getElementById('code').value.trim() || 'неизвестен';
-            let hasActiveLinks = false;
+            let hasPhotoService = false; // флаг наличия оплаченного фото
 
             for (const item of items) {
                 let dateStr = '';
@@ -648,7 +648,10 @@
                             </div>
                         </div>`;
                 } else {
-                    hasActiveLinks = true;
+                    // Проверяем, является ли эта активная услуга "Фото"
+                    if (item.name === 'Фото') {
+                        hasPhotoService = true;
+                    }
                     container.innerHTML += `
                         <div class="link-item">
                             <div style="flex:1;">
@@ -664,8 +667,8 @@
                 }
             }
 
-            // Кнопка "Telegram MAX" – показывается только если есть хотя бы одна активная ссылка
-            if (hasActiveLinks) {
+            // Кнопка "Telegram MAX" – только если у клиента есть оплаченное фото
+            if (hasPhotoService) {
                 container.innerHTML += `
                     <div class="link-item" style="background:#fffbe6; border:1px solid #ffe082;">
                         <div style="flex:1;">
