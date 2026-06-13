@@ -672,8 +672,9 @@
                 container.innerHTML += `
                     <div class="link-item" style="background:#fffbe6; border:1px solid #ffe082;">
                         <div style="flex:1;">
-                            <div class="link-name">📨 Не получается скачать фото с Яндекс-диска!</div>
-                            <div class="link-name">Услуга: "Отправить все фото моей лодки через мессенджер MAX"</div>
+                                                       <div class="link-name">Не получается скачать фото с Яндекс-диска!?</div>
+                            <div style="font-size:14px; color:#f57c00; font-weight:bold; margin-bottom:4px;">Платная услуга:</div>
+                            <div style="font-size:14px; color:#333; margin-bottom:8px;">"Отправить все фото моей лодки через мессенджер MAX"</div>
                             <div style="font-size:14px; color:#f57c00; font-weight:bold; margin-bottom:8px;">Цена: 500 руб.</div>
                             <button onclick="showTelegramMaxForm()" style="padding:6px 14px; font-size:13px; background:#2196F3; color:white; border:none; border-radius:4px; cursor:pointer;">
                                 📨 Заказать
@@ -687,7 +688,7 @@
             const container = document.getElementById('links-list');
             container.innerHTML = `
                 <div style="background:#fff; border-radius:12px; padding:25px; text-align:left;">
-                    <h3 style="text-align:center; color:#333; margin-bottom:20px;">📨 Отправка через мессенджер MAX</h3>
+                    <h3 style="text-align:center; color:#333; margin-bottom:20px;">"Отправить все фото моей лодки через мессенджер MAX"</h3>
                     <p style="text-align:center; color:#666;">Пожалуйста, укажите ваш номер телефона.</p>
                     <p style="text-align:center; color:#666;">Мы отправим все ваши фото через мессенджер MAX в течение 12 часов.</p>
                     
