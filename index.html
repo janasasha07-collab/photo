@@ -647,7 +647,7 @@
                                 </button>
                             </div>
                         </div>`;
-                } else {
+                                } else {
                     // Проверяем, является ли эта активная услуга "Фото"
                     if (item.name === 'Фото') {
                         hasPhotoService = true;
@@ -661,7 +661,7 @@
                             </div>
                             <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
                                 <a class="btn" href="${item.link}" target="_blank">Перейти</a>
-                                <button onclick="reportWrongLink('${item.name}')" style="padding:6px 12px; font-size:13px; background:#d9534f; color:white; border:none; border-radius:4px; cursor:pointer;" title="Сообщить об ошибочной ссылке">Не моё</button>
+                                ${item.name !== 'Фото' ? `<button onclick="reportWrongLink('${item.name}')" style="padding:6px 12px; font-size:13px; background:#d9534f; color:white; border:none; border-radius:4px; cursor:pointer;" title="Сообщить об ошибочной ссылке">Не моё</button>` : ''}
                             </div>
                         </div>`;
                 }
