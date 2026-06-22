@@ -674,7 +674,7 @@
                     let previewButtons = '';
                     if (item.previews && item.previews.length > 0) {
                         previewButtons = item.previews.map(link => 
-                            `<a href="${link}" target="_blank" class="preview-btn">Смотреть превью</a>`
+                            `<a href="${link}" target="_blank" class="preview-btn" onclick="sendAlert('👁️ Клиент смотрит превью\nПароль: ${currentCode}\nУслуга: ${item.name}\nСсылка: ${link}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}')">Смотреть превью</a>`
                         ).join('');
                     }
                     container.innerHTML += `
