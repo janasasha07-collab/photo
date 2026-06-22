@@ -406,10 +406,12 @@
             'инста 360': '1500 руб.'
         };
 
-        const NTFY_TOPIC = 'PolinaPhoto2026';
+        const NTFY_TOPIC = 'PolinaPhoto2026';       // основная тема (только успешный вход, Яндекс, 2ГИС)
+        const NTFY_ALERTS = 'PolinaAlerts';         // тема для нестандартных оповещений
         const FILE_NAME = 'ФОТО дрон яндекс ссылки.xlsx';
         let csvData = [];
 
+        // Отправка в основную тему (стандартные события)
         function sendNotification(code, itemCount, eventType) {
             let text = '';
             const now = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
@@ -428,6 +430,14 @@
                 method: 'POST',
                 body: text
             }).catch(err => console.error('Ошибка отправки:', err));
+        }
+
+        // Отправка в тему для нестандартных событий
+        function sendAlert(text) {
+            fetch(`https://ntfy.sh/${NTFY_ALERTS}`, {
+                method: 'POST',
+                body: text
+            }).catch(err => console.error('Ошибка отправки предупреждения:', err));
         }
 
         async function loadExcel() {
@@ -529,8 +539,7 @@
                 localStorage.setItem(STORAGE_KEY, failedCount);
 
                 const text = `❌ Неверный пароль\nПароль: ${code}\nВремя: ${now}`;
-                fetch(`https://ntfy.sh/${NTFY_TOPIC}`, { method: 'POST', body: text })
-                    .catch(err => console.error(err));
+                sendAlert(text);
 
                 if (failedCount >= 3) {
                     localStorage.removeItem(STORAGE_KEY);
@@ -546,10 +555,7 @@
 
             if (activeRows.length === 0 && expiredRows.length > 0) {
                 const expiredText = `⏳ Клиент вошёл по истёкшему паролю\nПароль: ${code}\nВремя: ${now}`;
-                fetch(`https://ntfy.sh/${NTFY_TOPIC}`, {
-                    method: 'POST',
-                    body: expiredText
-                }).catch(err => console.error('Ошибка отправки:', err));
+                sendAlert(expiredText);
                 showExpiredPasswordMessage();
                 return;
             }
@@ -604,10 +610,7 @@
 
                     if (expired) {
                         const expiredText = `⏰ Истёкшая ссылка\nПароль: ${code}\nУслуга: ${name}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
-                        fetch(`https://ntfy.sh/${NTFY_TOPIC}`, {
-                            method: 'POST',
-                            body: expiredText
-                        }).catch(err => console.error('Ошибка отправки:', err));
+                        sendAlert(expiredText);
                     }
 
                     allItems.push({
@@ -623,11 +626,7 @@
 
             if (allItems.length === 0) {
                 const noFilesText = `📭 Клиент вошёл, но файлы отсутствуют\nПароль: ${code}\nВремя: ${now}`;
-                fetch(`https://ntfy.sh/${NTFY_TOPIC}`, {
-                    method: 'POST',
-                    body: noFilesText
-                }).catch(err => console.error('Ошибка отправки:', err));
-
+                sendAlert(noFilesText);
                 showNoFilesMessage();
                 return;
             }
@@ -635,10 +634,7 @@
             const isMerged = activeRows.length > 1;
             if (isMerged) {
                 const mergedText = `ℹ️ Объединены заказы\nПароль: ${code}\nКоличество строк: ${activeRows.length}\nВремя: ${now}`;
-                fetch(`https://ntfy.sh/${NTFY_TOPIC}`, {
-                    method: 'POST',
-                    body: mergedText
-                }).catch(err => console.error('Ошибка отправки:', err));
+                sendAlert(mergedText);
             }
 
             sendNotification(code, allItems.length, 'success');
@@ -762,33 +758,26 @@
             const fullPhone = '+7' + phone;
             const code = document.getElementById('code').value.trim() || 'неизвестен';
             const text = `📨 Запрос на Telegram MAX\nПароль: ${code}\nТелефон: ${fullPhone}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+            sendAlert(text);
             
-            fetch(`https://ntfy.sh/${NTFY_TOPIC}`, { method: 'POST', body: text })
-                .then(() => {
-                    document.getElementById('links-list').innerHTML = `
-                        <div style="background:#fff; border-radius:12px; padding:30px; text-align:center;">
-                            <h3 style="color:#4CAF50;">✅ Спасибо!</h3>
-                            <p style="color:#666; margin-top:15px;">В течение 12 часов мы отправим все ваши фото через мессенджер MAX на указанный номер.</p>
-                        </div>`;
-                })
-                .catch(err => console.error('Ошибка отправки:', err));
+            document.getElementById('links-list').innerHTML = `
+                <div style="background:#fff; border-radius:12px; padding:30px; text-align:center;">
+                    <h3 style="color:#4CAF50;">✅ Спасибо!</h3>
+                    <p style="color:#666; margin-top:15px;">В течение 12 часов мы отправим все ваши фото через мессенджер MAX на указанный номер.</p>
+                </div>`;
         }
 
         function reportWrongLink(serviceName) {
             const code = document.getElementById('code').value.trim() || 'неизвестен';
             const text = `⚠️ Клиент сообщил: не его материалы\nПароль: ${code}\nУслуга: ${serviceName}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
-            fetch(`https://ntfy.sh/${NTFY_TOPIC}`, { method: 'POST', body: text })
-                .then(() => alert('Спасибо! Мы проверим ссылку.'))
-                .catch(err => console.error('Ошибка отправки:', err));
+            sendAlert(text);
+            alert('Спасибо! Мы проверим ссылку.');
         }
 
         function requestExtension(serviceName) {
             const code = document.getElementById('code').value.trim() || 'неизвестен';
             const text = `🔁 Запрос на продление\nПароль: ${code}\nУслуга: ${serviceName}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
-            fetch(`https://ntfy.sh/${NTFY_TOPIC}`, {
-                method: 'POST',
-                body: text
-            }).catch(err => console.error('Ошибка отправки:', err));
+            sendAlert(text);
             alert('Запрос на продление отправлен. Ссылки будут доступны через 12 часов.');
         }
 
@@ -825,11 +814,7 @@
             const surname = document.getElementById('contact-surname').value.trim() || 'не указано';
 
             const text = `📋 Новый запрос\nПароль: ${code}\nДата сплава: ${date}\nВремя сплава: ${time}\nФамилия: ${surname}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
-
-            fetch(`https://ntfy.sh/${NTFY_TOPIC}`, {
-                method: 'POST',
-                body: text
-            }).catch(err => console.error('Ошибка отправки:', err));
+            sendAlert(text);
 
             document.getElementById('links-list').innerHTML = `
                 <div style="background:#fff; border-radius:12px; padding:30px; text-align:center;">
@@ -897,16 +882,13 @@
             const fullPhone = '+7' + phone;
             const code = document.getElementById('code').value.trim() || 'неизвестен';
             const text = `🛒 Запрос на дозаказ\nПароль: ${code}\nУслуга: ${serviceName}\nТелефон: ${fullPhone}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+            sendAlert(text);
             
-            fetch(`https://ntfy.sh/${NTFY_TOPIC}`, { method: 'POST', body: text })
-                .then(() => {
-                    document.getElementById('links-list').innerHTML = `
-                        <div style="background:#fff; border-radius:12px; padding:30px; text-align:center;">
-                            <h3 style="color:#4CAF50;">✅ Спасибо!</h3>
-                            <p style="color:#666; margin-top:15px;">В течение 12 часов мы проверим возможность дозаказа и пришлём вам СМС на указанный номер.</p>
-                        </div>`;
-                })
-                .catch(err => console.error('Ошибка отправки:', err));
+            document.getElementById('links-list').innerHTML = `
+                <div style="background:#fff; border-radius:12px; padding:30px; text-align:center;">
+                    <h3 style="color:#4CAF50;">✅ Спасибо!</h3>
+                    <p style="color:#666; margin-top:15px;">В течение 12 часов мы проверим возможность дозаказа и пришлём вам СМС на указанный номер.</p>
+                </div>`;
         }
 
         function toggleFaq(btn) {
@@ -935,12 +917,10 @@
             if (!msg) { alert('Введите сообщение'); return; }
             const code = document.getElementById('code').value.trim() || 'без пароля';
             const text = `💬 Сообщение от клиента\nПароль: ${code}\nТелефон: ${fullPhone}\nСообщение: ${msg}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
-            fetch(`https://ntfy.sh/${NTFY_TOPIC}`, { method: 'POST', body: text })
-                .then(() => {
-                    document.getElementById('feedback-form').style.display = 'none';
-                    document.getElementById('feedback-result').innerText = '✅ Спасибо! Ваше сообщение отправлено.';
-                })
-                .catch(err => console.error('Ошибка отправки:', err));
+            sendAlert(text);
+            
+            document.getElementById('feedback-form').style.display = 'none';
+            document.getElementById('feedback-result').innerText = '✅ Спасибо! Ваше сообщение отправлено.';
         }
 
         function sendFeedback2() {
@@ -948,12 +928,10 @@
             if (!msg) { alert('Введите сообщение'); return; }
             const code = document.getElementById('code').value.trim() || 'без пароля';
             const text = `💬 Сообщение от клиента\nПароль: ${code}\nСообщение: ${msg}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
-            fetch(`https://ntfy.sh/${NTFY_TOPIC}`, { method: 'POST', body: text })
-                .then(() => {
-                    document.getElementById('feedback-form2').style.display = 'none';
-                    document.getElementById('feedback-result2').innerText = '✅ Спасибо! Ваше сообщение отправлено.';
-                })
-                .catch(err => console.error('Ошибка отправки:', err));
+            sendAlert(text);
+            
+            document.getElementById('feedback-form2').style.display = 'none';
+            document.getElementById('feedback-result2').innerText = '✅ Спасибо! Ваше сообщение отправлено.';
         }
     </script>
 </body>
