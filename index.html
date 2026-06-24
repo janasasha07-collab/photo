@@ -440,6 +440,22 @@
             }).catch(err => console.error('Ошибка отправки предупреждения:', err));
         }
 
+        // Вспомогательная функция: сборка полного номера из поля с префиксом +7
+        function getFullPhoneFromInput(inputId) {
+            const input = document.getElementById(inputId);
+            if (!input) return '';
+            let raw = input.value.trim();
+            // Удаляем всё, кроме цифр
+            raw = raw.replace(/\D/g, '');
+            // Если номер начинается с 7 или 8, убираем первую цифру (она будет продублирована префиксом +7)
+            if (raw.startsWith('7') || raw.startsWith('8')) {
+                raw = raw.substring(1);
+            }
+            // Оставляем максимум 10 цифр (остальное – мусор)
+            raw = raw.substring(0, 10);
+            return '+7' + raw;
+        }
+
         async function loadExcel() {
             try {
                 const url = FILE_NAME + '?ts=' + new Date().getTime();
@@ -749,15 +765,13 @@
         }
 
         function submitTelegramMax() {
-            const phoneInput = document.getElementById('telegrammax-phone');
-            const phone = phoneInput.value.trim();
-            if (!phone) {
+            const fullPhone = getFullPhoneFromInput('telegrammax-phone');
+            if (fullPhone === '+7') {
                 alert('Пожалуйста, укажите номер телефона. Это обязательно.');
                 return;
             }
-            const fullPhone = '+7' + phone;
             const code = document.getElementById('code').value.trim() || 'неизвестен';
-            const text = `📨 Запрос на Telegram MAX\nПароль: ${code}\nТелефон: tel:+7${phone}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+            const text = `📨 Запрос на Telegram MAX\nПароль: ${code}\nТелефон: tel:${fullPhone}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
             sendAlert(text);
             
             document.getElementById('links-list').innerHTML = `
@@ -815,13 +829,11 @@
         }
 
         function submitContactForm(code) {
-            const phoneInput = document.getElementById('contact-phone');
-            const phone = phoneInput ? phoneInput.value.trim() : '';
-            if (!phone) {
+            const fullPhone = getFullPhoneFromInput('contact-phone');
+            if (fullPhone === '+7') {
                 alert('Пожалуйста, укажите номер телефона. Это обязательно.');
                 return;
             }
-            const fullPhone = '+7' + phone;
             const date = document.getElementById('contact-date').value || 'не указано';
             const time = document.getElementById('contact-time').value || 'не указано';
             const surname = document.getElementById('contact-surname').value.trim() || 'не указано';
@@ -886,13 +898,11 @@
         }
 
         function submitRepurchase(serviceName) {
-            const phoneInput = document.getElementById('repurchase-phone');
-            const phone = phoneInput.value.trim();
-            if (!phone) {
+            const fullPhone = getFullPhoneFromInput('repurchase-phone');
+            if (fullPhone === '+7') {
                 alert('Пожалуйста, укажите номер телефона. Это обязательно.');
                 return;
             }
-            const fullPhone = '+7' + phone;
             const code = document.getElementById('code').value.trim() || 'неизвестен';
             const text = `🛒 Запрос на дозаказ\nПароль: ${code}\nУслуга: ${serviceName}\nТелефон: tel:${fullPhone}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
             sendAlert(text);
@@ -919,13 +929,11 @@
         }
 
         function sendFeedback() {
-            const phoneInput = document.getElementById('feedback-phone');
-            const phone = phoneInput.value.trim();
-            if (!phone) {
+            const fullPhone = getFullPhoneFromInput('feedback-phone');
+            if (fullPhone === '+7') {
                 alert('Пожалуйста, укажите номер телефона. Это обязательно.');
                 return;
             }
-            const fullPhone = '+7' + phone;
             const msg = document.getElementById('feedback-msg').value.trim();
             if (!msg) { alert('Введите сообщение'); return; }
             const code = document.getElementById('code').value.trim() || 'без пароля';
