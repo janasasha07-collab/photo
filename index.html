@@ -412,7 +412,7 @@
         let csvData = [];
 
         // Отправка в основную тему (стандартные события)
-        function sendNotification(code, itemCount, eventType) {
+        function sendNotification(code, itemCount, eventType, extraInfo = '') {
             let text = '';
             const now = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
 
@@ -422,6 +422,9 @@
                 text = `⭐ Клиент перешёл на отзыв 2ГИС\nВремя: ${now}`;
             } else if (code) {
                 text = `🔔 Клиент вошёл\nПароль: ${code}\nВремя: ${now}\nНайдено услуг: ${itemCount}`;
+                if (extraInfo) {
+                    text += `\n${extraInfo}`;
+                }
             } else {
                 return;
             }
@@ -445,13 +448,10 @@
             const input = document.getElementById(inputId);
             if (!input) return '';
             let raw = input.value.trim();
-            // Удаляем всё, кроме цифр
             raw = raw.replace(/\D/g, '');
-            // Если номер начинается с 7 или 8, убираем первую цифру (она будет продублирована префиксом +7)
             if (raw.startsWith('7') || raw.startsWith('8')) {
                 raw = raw.substring(1);
             }
-            // Оставляем максимум 10 цифр (остальное – мусор)
             raw = raw.substring(0, 10);
             return '+7' + raw;
         }
@@ -647,13 +647,25 @@
                 return;
             }
 
+            // Сбор уникальных дат сплава для уведомления
+            const datesSet = new Set();
+            for (const item of activeRows) {
+                const d = dateMap[item.index];
+                if (d) datesSet.add(d);
+            }
+            let dateInfo = '';
+            if (datesSet.size > 0) {
+                const datesArr = Array.from(datesSet);
+                dateInfo = (datesArr.length === 1 ? 'Дата сплава: ' : 'Даты сплавов: ') + datesArr.join(', ');
+            }
+
             const isMerged = activeRows.length > 1;
             if (isMerged) {
                 const mergedText = `ℹ️ Объединены заказы\nПароль: ${code}\nКоличество строк: ${activeRows.length}\nВремя: ${now}`;
                 sendAlert(mergedText);
             }
 
-            sendNotification(code, allItems.length, 'success');
+            sendNotification(code, allItems.length, 'success', dateInfo);
             showResult(allItems, isMerged);
         }
 
