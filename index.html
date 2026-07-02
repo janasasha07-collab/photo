@@ -625,7 +625,8 @@
                     seenLinks.add(uniqueKey);
 
                     if (expired) {
-                        const expiredText = `⏰ Истёкшая ссылка\nПароль: ${code}\nУслуга: ${name}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+                        let dateInfo = rowDate ? `\nДата сплава: ${rowDate}` : '';
+                        const expiredText = `⏰ Истёкшая ссылка\nПароль: ${code}\nУслуга: ${name}${dateInfo}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
                         sendAlert(expiredText);
                     }
 
@@ -692,7 +693,7 @@
                                 <div class="link-name">${item.name}</div>
                                 ${dateStr}
                                 <div style="font-size:14px; color:red; font-weight:bold; margin-bottom:8px;">Срок доступа истёк</div>
-                                <button onclick="requestExtension('${item.name}')" style="padding:6px 14px; font-size:13px; background:#ff9800; color:white; border:none; border-radius:4px; cursor:pointer;">
+                                <button onclick="requestExtension('${item.name}', '${item.rowDate}')" style="padding:6px 14px; font-size:13px; background:#ff9800; color:white; border:none; border-radius:4px; cursor:pointer;">
                                     Запросить продление
                                 </button>
                             </div>
@@ -800,9 +801,10 @@
             alert('Спасибо! Мы проверим ссылку.');
         }
 
-        function requestExtension(serviceName) {
+        function requestExtension(serviceName, dateStr = '') {
             const code = document.getElementById('code').value.trim() || 'неизвестен';
-            const text = `🔁 Запрос на продление\nПароль: ${code}\nУслуга: ${serviceName}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+            let dateInfo = dateStr ? `\nДата сплава: ${dateStr}` : '';
+            const text = `🔁 Запрос на продление\nПароль: ${code}\nУслуга: ${serviceName}${dateInfo}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
             sendAlert(text);
             alert('Запрос на продление отправлен. Ссылки будут доступны через 12 часов.');
         }
