@@ -563,7 +563,6 @@
                     return;
                 }
 
-                // Кастомные сообщения для 1-й и 2-й попытки
                 if (failedCount === 1) {
                     alert('Данный пароль ещё не внесён в базу данных или неверный. Пожалуйста, попробуйте ввести пароль через 12 часов или проверьте последние цифры номера телефона в договоре (он же пароль).');
                 } else if (failedCount === 2) {
@@ -592,6 +591,22 @@
                 for (let c = 2; c < row.length; c++) {
                     let raw = String(row[c] || '').trim();
                     if (!raw) continue;
+
+                    // Проверка на знак "*"
+                    if (raw === '*') {
+                        let name = csvData[0][c] ? String(csvData[0][c]).trim() : '';
+                        if (!name) name = 'Папка ' + (allItems.length + 1);
+                        const uniqueKey = 'PENDING:' + name + rowDate;
+                        if (!seenLinks.has(uniqueKey)) {
+                            seenLinks.add(uniqueKey);
+                            allItems.push({
+                                name: name,
+                                pending: true,
+                                rowDate: rowDate
+                            });
+                        }
+                        continue;
+                    }
 
                     let expired = false;
                     let isPreview = false;
@@ -646,10 +661,29 @@
                 }
             }
 
-            if (allItems.length === 0) {
-                const noFilesText = `📭 Клиент вошёл, но файлы отсутствуют\nПароль: ${code}\nВремя: ${now}`;
-                sendAlert(noFilesText);
-                showNoFilesMessage();
+            // Проверка наличия реальных услуг (не pending, не expired)
+            let hasActiveOrPreview = false;
+            let hasPending = false;
+            for (const item of allItems) {
+                if (!item.expired && !item.pending) {
+                    hasActiveOrPreview = true;
+                }
+                if (item.pending) {
+                    hasPending = true;
+                }
+            }
+
+            if (!hasActiveOrPreview) {
+                if (hasPending) {
+                    // Есть только pending-услуги, показываем их и отправляем уведомление с пометкой
+                    const pendingInfo = '⏳ Услуги ещё не готовы';
+                    sendNotification(code, allItems.length, 'success', pendingInfo);
+                    showResult(allItems, activeRows.length > 1);
+                } else {
+                    const noFilesText = `📭 Клиент вошёл, но файлы отсутствуют\nПароль: ${code}\nВремя: ${now}`;
+                    sendAlert(noFilesText);
+                    showNoFilesMessage();
+                }
                 return;
             }
 
@@ -689,6 +723,19 @@
                 let dateStr = '';
                 if (item.rowDate) {
                     dateStr = `<div style="font-size:13px; color:#888; margin-bottom:5px;">📅 ${item.rowDate}</div>`;
+                }
+
+                // Обработка pending-услуг
+                if (item.pending) {
+                    container.innerHTML += `
+                        <div class="link-item" style="background:#f9f9f9; border:1px solid #ddd;">
+                            <div>
+                                <div class="link-name">${item.name}</div>
+                                ${dateStr}
+                                <div style="font-size:14px; color:#888; margin-bottom:4px;">⏳ Файлы ещё загружаются…</div>
+                            </div>
+                        </div>`;
+                    continue;
                 }
 
                 if (item.expired) {
