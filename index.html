@@ -610,7 +610,7 @@
 
                     let expired = false;
                     let isPreview = false;
-                    let isNotMine = false;   // <-- новый флаг для знака %
+                    let isNotMine = false;   // флаг для знака %
                     let mainLink = '';
                     let previewLinks = [];
 
@@ -763,7 +763,10 @@
                             <div>
                                 <div class="link-name">${item.name}</div>
                                 ${dateStr}
-                                <div style="font-size:14px; color:#d9534f; font-weight:bold;">Вы указали, что материалы не Ваши</div>
+                                <div style="font-size:14px; color:#d9534f; font-weight:bold; margin-bottom:8px;">Вы указали, что материалы не Ваши</div>
+                                <button onclick="returnMaterial('${item.name}', '${item.rowDate}')" style="padding:6px 14px; font-size:13px; background:#5bc0de; color:white; border:none; border-radius:4px; cursor:pointer;">
+                                    Это мои материалы 😢
+                                </button>
                             </div>
                         </div>`;
                 } else if (item.isPreview) {
@@ -822,6 +825,15 @@
                         </div>
                     </div>`;
             }
+        }
+
+        // Новая функция для кнопки "Это мои материалы 😢"
+        function returnMaterial(serviceName, dateStr = '') {
+            const code = document.getElementById('code').value.trim() || 'неизвестен';
+            let dateInfo = dateStr ? `\nДата сплава: ${dateStr}` : '';
+            const text = `😢 Клиент хочет вернуть материалы\nПароль: ${code}\nУслуга: ${serviceName}${dateInfo}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+            sendAlert(text);
+            alert('✅ Ваша заявка отправлена! Материалы станут доступны в течение 24 часов.');
         }
 
         function showTelegramMaxForm() {
