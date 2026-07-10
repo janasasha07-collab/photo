@@ -626,7 +626,6 @@
                         mainLink = extracted.mainLink;
                         previewLinks = extracted.previews;
                     } else if (raw.startsWith('%')) {
-                        // Новая логика: знак % означает "не мои материалы"
                         isNotMine = true;
                         raw = raw.substring(1).trim();
                         if (!raw || !raw.startsWith('http')) continue;
@@ -668,32 +667,26 @@
                 }
             }
 
-            // Проверка наличия реальных услуг (не pending, не expired)
-            let hasActiveOrPreview = false;
-            let hasPending = false;
-            for (const item of allItems) {
-                if (!item.expired && !item.pending && !item.isNotMine) {
-                    hasActiveOrPreview = true;
-                }
-                if (item.pending) {
-                    hasPending = true;
-                }
-            }
-
-            if (!hasActiveOrPreview) {
-                if (hasPending) {
-                    const pendingInfo = '⏳ Услуги ещё не готовы';
-                    sendNotification(code, allItems.length, 'success', pendingInfo);
-                    showResult(allItems, activeRows.length > 1);
-                } else {
-                    const noFilesText = `📭 Клиент вошёл, но файлы отсутствуют\nПароль: ${code}\nВремя: ${now}`;
-                    sendAlert(noFilesText);
-                    showNoFilesMessage();
-                }
+            // *** ИСПРАВЛЕННАЯ ПРОВЕРКА ***
+            // Если нет ни одного элемента — сообщение об отсутствии файлов
+            if (allItems.length === 0) {
+                const noFilesText = `📭 Клиент вошёл, но файлы отсутствуют\nПароль: ${code}\nВремя: ${now}`;
+                sendAlert(noFilesText);
+                showNoFilesMessage();
                 return;
             }
 
-            // Сбор уникальных дат сплава для уведомления
+            // Если есть только pending-услуги, показываем их с соответствующим текстом
+            let hasOnlyPending = allItems.every(item => item.pending);
+            if (hasOnlyPending) {
+                const pendingInfo = '⏳ Услуги ещё не готовы';
+                sendNotification(code, allItems.length, 'success', pendingInfo);
+                showResult(allItems, activeRows.length > 1);
+                return;
+            }
+
+            // Во всех остальных случаях (есть активные/превью/expired/notMine) показываем их
+            // Сбор дат для уведомления
             const datesSet = new Set();
             for (const item of activeRows) {
                 const d = dateMap[item.index];
@@ -757,7 +750,6 @@
                             </div>
                         </div>`;
                 } else if (item.isNotMine) {
-                    // Блок для знака %
                     container.innerHTML += `
                         <div class="link-item" style="background:#fff0f0; border:1px solid #ffaaaa;">
                             <div>
@@ -827,7 +819,6 @@
             }
         }
 
-        // Новая функция для кнопки "Это мои материалы 😢"
         function returnMaterial(serviceName, dateStr = '') {
             const code = document.getElementById('code').value.trim() || 'неизвестен';
             let dateInfo = dateStr ? `\nДата сплава: ${dateStr}` : '';
