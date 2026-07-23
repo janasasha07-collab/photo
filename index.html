@@ -412,7 +412,7 @@
         let csvData = [];
 
         // Отправка в основную тему (стандартные события)
-        function sendNotification(code, itemCount, eventType, extraInfo = '') {
+        function sendNotification(code, itemCount, eventType, extraInfo = '', clientPhone = '') {
             let text = '';
             const now = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
 
@@ -424,6 +424,9 @@
                 text = `🔔 Клиент вошёл\nПароль: ${code}`;
                 if (extraInfo) {
                     text += `\n${extraInfo}`;
+                }
+                if (clientPhone) {
+                    text += `\n📞 Клиент: tel:${clientPhone}`;
                 }
                 text += `\nВремя: ${now}\nНайдено услуг: ${itemCount}`;
             } else {
@@ -455,6 +458,25 @@
             }
             raw = raw.substring(0, 10);
             return '+7' + raw;
+        }
+
+        // Извлечение чистого номера телефона из столбца B (индекс 1)
+        function extractClientPhone(row) {
+            if (!row || row.length < 2) return '';
+            const raw = String(row[1] || '').trim();
+            if (!raw) return '';
+            // Удаляем всё, кроме цифр и знака +
+            let cleaned = raw.replace(/[^\d\+]/g, '');
+            // Если номер уже начинается с +7 или 8, оставляем как есть, иначе пытаемся привести к +7
+            if (cleaned.startsWith('+7') && cleaned.length === 12) {
+                return cleaned; // +7XXXXXXXXXX
+            } else if (cleaned.startsWith('8') && cleaned.length === 11) {
+                return '+7' + cleaned.substring(1);
+            } else if (cleaned.length === 10) {
+                return '+7' + cleaned;
+            }
+            // Если не удалось распознать, возвращаем исходную строку (вдруг там просто имя)
+            return raw;
         }
 
         async function loadExcel() {
@@ -555,8 +577,6 @@
                 failedCount++;
                 localStorage.setItem(STORAGE_KEY, failedCount);
 
-                // Попытка определить дату, если она была у этого пароля ранее (по первой попавшейся строке)
-                // Но у нас нет активных строк, так что дату не узнать, просто отправляем alert без даты
                 const text = `❌ Неверный пароль\nПароль: ${code}\nВремя: ${now}`;
                 sendAlert(text);
 
@@ -576,8 +596,50 @@
 
             localStorage.removeItem(STORAGE_KEY);
 
+            // Извлекаем номер телефона клиента из первой активной строки (где есть номер)
+            let clientPhone = '';
+            for (const item of activeRows) {
+                const phone = extractClientPhone(item.row);
+                if (phone) {
+                    clientPhone = phone;
+                    break;
+                }
+            }
+            // Если активных строк нет, пробуем взять из истекших (на случай, если пароль полностью истек)
+            if (!clientPhone && expiredRows.length > 0) {
+                for (const item of expiredRows) {
+                    const phone = extractClientPhone(item.row);
+                    if (phone) {
+                        clientPhone = phone;
+                        break;
+                    }
+                }
+            }
+
+            // Сбор дат для уведомлений
+            const datesSet = new Set();
+            if (activeRows.length > 0) {
+                for (const item of activeRows) {
+                    const d = dateMap[item.index];
+                    if (d) datesSet.add(d);
+                }
+            } else if (expiredRows.length > 0) {
+                for (const item of expiredRows) {
+                    const d = dateMap[item.index];
+                    if (d) datesSet.add(d);
+                }
+            }
+            let dateInfo = '';
+            if (datesSet.size > 0) {
+                const datesArr = Array.from(datesSet);
+                dateInfo = (datesArr.length === 1 ? 'Дата сплава: ' : 'Даты сплавов: ') + datesArr.join(', ');
+            }
+
             if (activeRows.length === 0 && expiredRows.length > 0) {
-                const expiredText = `⏳ Клиент вошёл по истёкшему паролю\nПароль: ${code}\nВремя: ${now}`;
+                let expiredText = `⏳ Клиент вошёл по истёкшему паролю\nПароль: ${code}`;
+                if (dateInfo) expiredText += `\n${dateInfo}`;
+                if (clientPhone) expiredText += `\n📞 Клиент: tel:${clientPhone}`;
+                expiredText += `\nВремя: ${now}`;
                 sendAlert(expiredText);
                 showExpiredPasswordMessage();
                 return;
@@ -653,9 +715,11 @@
                     seenLinks.add(uniqueKey);
 
                     if (expired) {
-                        let dateInfo = rowDate ? `\nДата сплава: ${rowDate}` : '';
-                        const expiredText = `⏰ Истёкшая ссылка\nПароль: ${code}\nУслуга: ${name}${dateInfo}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
-                        sendAlert(expiredText);
+                        let alertText = `⏰ Истёкшая ссылка\nПароль: ${code}\nУслуга: ${name}`;
+                        if (rowDate) alertText += `\nДата сплава: ${rowDate}`;
+                        if (clientPhone) alertText += `\n📞 Клиент: tel:${clientPhone}`;
+                        alertText += `\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+                        sendAlert(alertText);
                     }
 
                     allItems.push({
@@ -672,7 +736,10 @@
 
             // Проверка: если нет ни одного элемента — показываем сообщение
             if (allItems.length === 0) {
-                const noFilesText = `📭 Клиент вошёл, но файлы отсутствуют\nПароль: ${code}\nВремя: ${now}`;
+                let noFilesText = `📭 Клиент вошёл, но файлы отсутствуют\nПароль: ${code}`;
+                if (dateInfo) noFilesText += `\n${dateInfo}`;
+                if (clientPhone) noFilesText += `\n📞 Клиент: tel:${clientPhone}`;
+                noFilesText += `\nВремя: ${now}`;
                 sendAlert(noFilesText);
                 showNoFilesMessage();
                 return;
@@ -682,30 +749,21 @@
             let hasOnlyPending = allItems.every(item => item.pending);
             if (hasOnlyPending) {
                 const pendingInfo = '⏳ Услуги ещё не готовы';
-                sendNotification(code, allItems.length, 'success', pendingInfo);
+                sendNotification(code, allItems.length, 'success', pendingInfo, clientPhone);
                 showResult(allItems, activeRows.length > 1);
                 return;
             }
 
-            // Сбор уникальных дат сплава для уведомления
-            const datesSet = new Set();
-            for (const item of activeRows) {
-                const d = dateMap[item.index];
-                if (d) datesSet.add(d);
-            }
-            let dateInfo = '';
-            if (datesSet.size > 0) {
-                const datesArr = Array.from(datesSet);
-                dateInfo = (datesArr.length === 1 ? 'Дата сплава: ' : 'Даты сплавов: ') + datesArr.join(', ');
-            }
-
             const isMerged = activeRows.length > 1;
             if (isMerged) {
-                const mergedText = `ℹ️ Объединены заказы\nПароль: ${code}\nКоличество строк: ${activeRows.length}\nВремя: ${now}`;
+                let mergedText = `ℹ️ Объединены заказы\nПароль: ${code}\nКоличество строк: ${activeRows.length}`;
+                if (dateInfo) mergedText += `\n${dateInfo}`;
+                if (clientPhone) mergedText += `\n📞 Клиент: tel:${clientPhone}`;
+                mergedText += `\nВремя: ${now}`;
                 sendAlert(mergedText);
             }
 
-            sendNotification(code, allItems.length, 'success', dateInfo);
+            sendNotification(code, allItems.length, 'success', dateInfo, clientPhone);
             showResult(allItems, isMerged);
         }
 
