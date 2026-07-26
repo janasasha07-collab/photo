@@ -426,8 +426,8 @@
                     text += `\n${extraInfo}`;
                 }
                 if (clientPhone) {
-                    // Markdown-ссылка для кликабельности в ntfy
-                    text += `\n📞 Клиент: [${clientPhone}](tel:${clientPhone})`;
+                    // Просто номер – мобильное приложение ntfy делает его кликабельным
+                    text += `\n📞 Клиент: ${clientPhone}`;
                 }
                 text += `\nВремя: ${now}\nНайдено услуг: ${itemCount}`;
             } else {
@@ -626,7 +626,7 @@
             if (activeRows.length === 0 && expiredRows.length > 0) {
                 let expiredText = `⏳ Клиент вошёл по истёкшему паролю\nПароль: ${code}`;
                 if (dateInfo) expiredText += `\n${dateInfo}`;
-                if (clientPhone) expiredText += `\n📞 Клиент: [${clientPhone}](tel:${clientPhone})`;
+                if (clientPhone) expiredText += `\n📞 Клиент: ${clientPhone}`;
                 expiredText += `\nВремя: ${now}`;
                 sendAlert(expiredText);
                 showExpiredPasswordMessage();
@@ -705,7 +705,7 @@
                     if (expired) {
                         let alertText = `⏰ Истёкшая ссылка\nПароль: ${code}\nУслуга: ${name}`;
                         if (rowDate) alertText += `\nДата сплава: ${rowDate}`;
-                        if (clientPhone) alertText += `\n📞 Клиент: [${clientPhone}](tel:${clientPhone})`;
+                        if (clientPhone) alertText += `\n📞 Клиент: ${clientPhone}`;
                         alertText += `\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
                         sendAlert(alertText);
                     }
@@ -725,7 +725,7 @@
             if (allItems.length === 0) {
                 let noFilesText = `📭 Клиент вошёл, но файлы отсутствуют\nПароль: ${code}`;
                 if (dateInfo) noFilesText += `\n${dateInfo}`;
-                if (clientPhone) noFilesText += `\n📞 Клиент: [${clientPhone}](tel:${clientPhone})`;
+                if (clientPhone) noFilesText += `\n📞 Клиент: ${clientPhone}`;
                 noFilesText += `\nВремя: ${now}`;
                 sendAlert(noFilesText);
                 showNoFilesMessage();
@@ -744,7 +744,7 @@
             if (isMerged) {
                 let mergedText = `ℹ️ Объединены заказы\nПароль: ${code}\nКоличество строк: ${activeRows.length}`;
                 if (dateInfo) mergedText += `\n${dateInfo}`;
-                if (clientPhone) mergedText += `\n📞 Клиент: [${clientPhone}](tel:${clientPhone})`;
+                if (clientPhone) mergedText += `\n📞 Клиент: ${clientPhone}`;
                 mergedText += `\nВремя: ${now}`;
                 sendAlert(mergedText);
             }
@@ -900,7 +900,7 @@
                 return;
             }
             const code = document.getElementById('code').value.trim() || 'неизвестен';
-            const text = `📨 Запрос на Telegram MAX\nПароль: ${code}\nТелефон: [${fullPhone}](tel:${fullPhone})\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+            const text = `📨 Запрос на Telegram MAX\nПароль: ${code}\nТелефон: ${fullPhone}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
             sendAlert(text);
             
             document.getElementById('links-list').innerHTML = `
@@ -969,7 +969,7 @@
             const time = document.getElementById('contact-time').value || 'не указано';
             const surname = document.getElementById('contact-surname').value.trim() || 'не указано';
 
-            const text = `📋 Новый запрос\nПароль: ${code}\nДата сплава: ${date}\nВремя сплава: ${time}\nФамилия: ${surname}\nТелефон: [${fullPhone}](tel:${fullPhone})\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+            const text = `📋 Новый запрос\nПароль: ${code}\nДата сплава: ${date}\nВремя сплава: ${time}\nФамилия: ${surname}\nТелефон: ${fullPhone}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
             sendAlert(text);
 
             document.getElementById('links-list').innerHTML = `
@@ -1035,7 +1035,7 @@
                 return;
             }
             const code = document.getElementById('code').value.trim() || 'неизвестен';
-            const text = `🛒 Запрос на дозаказ\nПароль: ${code}\nУслуга: ${serviceName}\nТелефон: [${fullPhone}](tel:${fullPhone})\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+            const text = `🛒 Запрос на дозаказ\nПароль: ${code}\nУслуга: ${serviceName}\nТелефон: ${fullPhone}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
             sendAlert(text);
             
             document.getElementById('links-list').innerHTML = `
@@ -1068,7 +1068,7 @@
             const msg = document.getElementById('feedback-msg').value.trim();
             if (!msg) { alert('Введите сообщение'); return; }
             const code = document.getElementById('code').value.trim() || 'без пароля';
-            const text = `💬 Сообщение от клиента\nПароль: ${code}\nТелефон: [${fullPhone}](tel:${fullPhone})\nСообщение: ${msg}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+            const text = `💬 Сообщение от клиента\nПароль: ${code}\nТелефон: ${fullPhone}\nСообщение: ${msg}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
             sendAlert(text);
             
             document.getElementById('feedback-form').style.display = 'none';
