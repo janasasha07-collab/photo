@@ -199,6 +199,43 @@
             text-decoration: none;
         }
         .preview-btn:hover { background: #1976D2; }
+/* Всплывающее окно оценки инструктора */
+.instructor-popup-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+.instructor-popup {
+    background: white;
+    border-radius: 16px;
+    padding: 30px 20px;
+    max-width: 350px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+.instructor-popup h3 {
+    margin: 0 0 20px;
+    font-size: 20px;
+    color: #333;
+}
+.vote-btn {
+    padding: 12px 30px;
+    font-size: 20px;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    margin: 10px;
+    font-weight: bold;
+    transition: transform 0.2s;
+}
+.vote-like { background: #4CAF50; color: white; }
+.vote-dislike { background: #f44336; color: white; }
+.vote-btn:active { transform: scale(0.95); }
     </style>
 </head>
 <body>
@@ -408,6 +445,7 @@
 
         const NTFY_TOPIC = 'PolinaPhoto2026';       // основная тема (только успешный вход, Яндекс, 2ГИС)
         const NTFY_ALERTS = 'PolinaAlerts';         // тема для нестандартных оповещений
+        const NTFY_VOTES = 'PolinaInstructorVotes'; // тема для голосов
         const FILE_NAME = 'ФОТО дрон яндекс ссылки.xlsx';
         let csvData = [];
 
@@ -751,6 +789,7 @@
 
             sendNotification(code, allItems.length, 'success', dateInfo, clientPhone);
             showResult(allItems, isMerged);
+            showInstructorPopupIfNeeded(code);   // ← добавить эту строку
         }
 
         function showResult(items, isMerged) {
@@ -1085,6 +1124,35 @@
             document.getElementById('feedback-form2').style.display = 'none';
             document.getElementById('feedback-result2').innerText = '✅ Спасибо! Ваше сообщение отправлено.';
         }
+// Новая тема ntfy для голосов (если ещё нет — добавь в начало скрипта: const NTFY_VOTES = 'PolinaInstructorVotes';)
+// Показ окна оценки, если ещё не голосовали с этим паролем
+function showInstructorPopupIfNeeded(password) {
+    const key = 'voted_' + password;
+    if (localStorage.getItem(key)) return; // уже голосовали
+    document.getElementById('instructor-popup-overlay').style.display = 'flex';
+}
+
+// Обработчик нажатия кнопки
+function submitVote(voteType) {
+    const password = document.getElementById('code').value.trim();
+    if (!password) return;
+    const key = 'voted_' + password;
+    localStorage.setItem(key, voteType); // запоминаем на этом устройстве
+    document.getElementById('instructor-popup-overlay').style.display = 'none';
+
+    // Отправляем уведомление в ntfy
+    const emoji = voteType === 'like' ? '👍' : '👎';
+    const text = `${emoji} Оценка инструктора: ${voteType === 'like' ? 'Понравился' : 'Не понравился'}\nПароль: ${password}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+    fetch(`https://ntfy.sh/${NTFY_VOTES}`, { method: 'POST', body: text }).catch(err => console.error);
+}
     </script>
+<!-- Всплывающее окно оценки инструктора -->
+<div id="instructor-popup-overlay" class="instructor-popup-overlay">
+    <div class="instructor-popup">
+        <h3>🤔 Понравился ли вам инструктор?</h3>
+        <button class="vote-btn vote-like" onclick="submitVote('like')">👍 Да</button>
+        <button class="vote-btn vote-dislike" onclick="submitVote('dislike')">👎 Нет</button>
+    </div>
+</div>
 </body>
 </html>
