@@ -1137,13 +1137,23 @@ function submitVote(voteType) {
     const password = document.getElementById('code').value.trim();
     if (!password) return;
     const key = 'voted_' + password;
-    localStorage.setItem(key, voteType); // запоминаем на этом устройстве
+    localStorage.setItem(key, voteType);
     document.getElementById('instructor-popup-overlay').style.display = 'none';
 
-    // Отправляем уведомление в ntfy
+    // Отправляем в ntfy
     const emoji = voteType === 'like' ? '👍' : '👎';
     const text = `${emoji} Оценка инструктора: ${voteType === 'like' ? 'Понравился' : 'Не понравился'}\nПароль: ${password}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
     fetch(`https://ntfy.sh/${NTFY_VOTES}`, { method: 'POST', body: text }).catch(err => console.error);
+
+    // Отправляем в Google Таблицу
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbw5Sxz_tyL-ST1UutHCKUW-6JWREhznI-bQH7hzv7W3ZjMVR6Y3NOfd35JfHd4DGq1aYQ/exec';
+    fetch(scriptURL, {
+        method: 'POST',
+        body: new URLSearchParams({
+            password: password,
+            vote: voteType
+        })
+    }).catch(err => console.error('Ошибка отправки в Google:', err));
 }
     </script>
 <!-- Всплывающее окно оценки инструктора -->
