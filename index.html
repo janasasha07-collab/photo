@@ -564,7 +564,7 @@
             return { mainLink, previews };
         }
 
-        // Новая функция выбора даты
+        // Функция выбора даты
         function showDateSelection(dates, allItems, activeRows, code, clientPhone, isExpiredMode = false) {
             document.getElementById('form-block').style.display = 'none';
             const resultBlock = document.getElementById('result-block');
@@ -583,8 +583,7 @@
                 btn.style.cssText = 'margin:8px; padding:12px 24px; font-size:16px; background:#4CAF50; color:white; border:none; border-radius:8px; cursor:pointer;';
                 btn.onclick = function() {
                     if (isExpiredMode) {
-                        // Для истёкших паролей показываем сообщение об истечении
-                        showExpiredPasswordMessage();
+                        showExpiredPasswordMessage(code, date);
                     } else {
                         const filteredItems = allItems.filter(item => item.rowDate === date);
                         const rowsForDate = activeRows.filter(item => dateMap[item.index] === date);
@@ -714,10 +713,10 @@
                 sendAlert(expiredText);
 
                 if (datesSet.size > 1) {
-                    // Несколько дат – предлагаем выбор, но показываем сообщение об истечении
                     showDateSelection(Array.from(datesSet), [], expiredRows, code, clientPhone, true);
                 } else {
-                    showExpiredPasswordMessage();
+                    const singleDate = datesSet.size === 1 ? Array.from(datesSet)[0] : '';
+                    showExpiredPasswordMessage(code, singleDate);
                 }
                 return;
             }
@@ -1087,7 +1086,8 @@
                 </div>`;
         }
 
-        function showExpiredPasswordMessage() {
+        // Обновлённая функция с кнопкой платного восстановления
+        function showExpiredPasswordMessage(code = '', dateStr = '') {
             document.getElementById('form-block').style.display = 'none';
             document.getElementById('result-block').style.display = 'block';
             document.getElementById('merge-warning').style.display = 'none';
@@ -1097,7 +1097,22 @@
                 <div style="text-align:center; padding:40px 20px; background:#fff; border-radius:12px;">
                     <div style="font-size:48px; margin-bottom:20px;">⏳</div>
                     <p style="font-size:20px; color:#333; font-weight:bold; margin-bottom:10px;">К сожалению</p>
-                    <p style="font-size:16px; color:#888;">сроки доступа Вашего пароля истекли</p>
+                    <p style="font-size:16px; color:#888; margin-bottom:20px;">сроки доступа Вашего пароля истекли</p>
+                    <button onclick="requestPaidExtension('${code}', '${dateStr}')" style="padding:12px 24px; font-size:16px; background:#ff9800; color:white; border:none; border-radius:8px; cursor:pointer;">
+                        Попробовать восстановить доступ на 7 дней (500₽)
+                    </button>
+                </div>`;
+        }
+
+        // Новая функция обработки платного восстановления
+        function requestPaidExtension(code, dateStr) {
+            const dateInfo = dateStr ? `\nДата сплава: ${dateStr}` : '';
+            const text = `💰 Запрос на платное восстановление доступа\nПароль: ${code}${dateInfo}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+            sendAlert(text);
+            document.getElementById('links-list').innerHTML = `
+                <div style="background:#fff; border-radius:12px; padding:30px; text-align:center;">
+                    <h3 style="color:#4CAF50;">✅ Заявка отправлена!</h3>
+                    <p style="color:#666; margin-top:15px;">Мы свяжемся с вами для уточнения деталей.</p>
                 </div>`;
         }
 
