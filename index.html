@@ -199,43 +199,43 @@
             text-decoration: none;
         }
         .preview-btn:hover { background: #1976D2; }
-/* Всплывающее окно оценки инструктора */
-.instructor-popup-overlay {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5);
-    z-index: 1000;
-    justify-content: center;
-    align-items: center;
-}
-.instructor-popup {
-    background: white;
-    border-radius: 16px;
-    padding: 30px 20px;
-    max-width: 350px;
-    width: 90%;
-    text-align: center;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-}
-.instructor-popup h3 {
-    margin: 0 0 20px;
-    font-size: 20px;
-    color: #333;
-}
-.vote-btn {
-    padding: 12px 30px;
-    font-size: 20px;
-    border: none;
-    border-radius: 50px;
-    cursor: pointer;
-    margin: 10px;
-    font-weight: bold;
-    transition: transform 0.2s;
-}
-.vote-like { background: #4CAF50; color: white; }
-.vote-dislike { background: #f44336; color: white; }
-.vote-btn:active { transform: scale(0.95); }
+        /* Всплывающее окно оценки инструктора */
+        .instructor-popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .instructor-popup {
+            background: white;
+            border-radius: 16px;
+            padding: 30px 20px;
+            max-width: 350px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .instructor-popup h3 {
+            margin: 0 0 20px;
+            font-size: 20px;
+            color: #333;
+        }
+        .vote-btn {
+            padding: 12px 30px;
+            font-size: 20px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 10px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        .vote-like { background: #4CAF50; color: white; }
+        .vote-dislike { background: #f44336; color: white; }
+        .vote-btn:active { transform: scale(0.95); }
     </style>
 </head>
 <body>
@@ -443,75 +443,56 @@
             'инста 360': '1500 руб.'
         };
 
-        const NTFY_TOPIC = 'PolinaPhoto2026';       // основная тема (только успешный вход, Яндекс, 2ГИС)
+        const NTFY_TOPIC = 'PolinaPhoto2026';       // основная тема
         const NTFY_ALERTS = 'PolinaAlerts';         // тема для нестандартных оповещений
         const NTFY_VOTES = 'PolinaInstructorVotes'; // тема для голосов
         const FILE_NAME = 'ФОТО дрон яндекс ссылки.xlsx';
         let csvData = [];
+        let dateMap = {};   // ГЛОБАЛЬНАЯ карта дат, чтобы showDateSelection могла её использовать
 
-        // Отправка в основную тему (стандартные события)
         function sendNotification(code, itemCount, eventType, extraInfo = '', clientPhone = '') {
             let text = '';
             const now = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
-
             if (eventType === 'Яндекс') {
                 text = `⭐ Клиент перешёл на отзыв Яндекс\nВремя: ${now}`;
             } else if (eventType === '2ГИС') {
                 text = `⭐ Клиент перешёл на отзыв 2ГИС\nВремя: ${now}`;
             } else if (code) {
                 text = `🔔 Клиент вошёл\nПароль: ${code}`;
-                if (extraInfo) {
-                    text += `\n${extraInfo}`;
-                }
-                if (clientPhone) {
-                    // Просто номер – мобильное приложение ntfy делает его кликабельным
-                    text += `\n📞 Клиент: ${clientPhone}`;
-                }
+                if (extraInfo) text += `\n${extraInfo}`;
+                if (clientPhone) text += `\n📞 Клиент: ${clientPhone}`;
                 text += `\nВремя: ${now}\nНайдено услуг: ${itemCount}`;
             } else {
                 return;
             }
-
-            fetch(`https://ntfy.sh/${NTFY_TOPIC}`, {
-                method: 'POST',
-                body: text
-            }).catch(err => console.error('Ошибка отправки:', err));
+            fetch(`https://ntfy.sh/${NTFY_TOPIC}`, { method: 'POST', body: text }).catch(err => console.error);
         }
 
-        // Отправка в тему для нестандартных событий
         function sendAlert(text) {
-            fetch(`https://ntfy.sh/${NTFY_ALERTS}`, {
-                method: 'POST',
-                body: text
-            }).catch(err => console.error('Ошибка отправки предупреждения:', err));
+            fetch(`https://ntfy.sh/${NTFY_ALERTS}`, { method: 'POST', body: text }).catch(err => console.error);
         }
 
-        // Вспомогательная функция: сборка полного номера из поля с префиксом +7
         function getFullPhoneFromInput(inputId) {
             const input = document.getElementById(inputId);
             if (!input) return '';
             let raw = input.value.trim();
             raw = raw.replace(/\D/g, '');
-            if (raw.startsWith('7') || raw.startsWith('8')) {
-                raw = raw.substring(1);
-            }
+            if (raw.startsWith('7') || raw.startsWith('8')) raw = raw.substring(1);
             raw = raw.substring(0, 10);
             return '+7' + raw;
         }
 
-        // Извлечение номера телефона клиента из столбца B (индекс 1)
         function extractClientPhone(row) {
             if (!row || row.length < 2) return '';
             const raw = String(row[1] || '').trim();
             if (!raw) return '';
             let cleaned = raw.replace(/[^\d\+]/g, '');
-
             if (cleaned.startsWith('+7') && cleaned.length === 12) return cleaned;
             if (cleaned.startsWith('8') && cleaned.length === 11) return '+7' + cleaned.substring(1);
             if (cleaned.startsWith('7') && cleaned.length === 11) return '+' + cleaned;
             if (cleaned.length === 10 && cleaned.startsWith('9')) return '+7' + cleaned;
             if (/^\d+$/.test(cleaned) && cleaned.length >= 10) return '+' + cleaned;
-            return raw; // если не удалось распознать, возвращаем как есть (может, имя)
+            return raw;
         }
 
         async function loadExcel() {
@@ -524,28 +505,34 @@
                 const sheetName = workbook.SheetNames[0];
                 const sheet = workbook.Sheets[sheetName];
                 csvData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-                console.log('Данные загружены', csvData);
             } catch (err) {
-                console.error(err);
                 document.getElementById('form-block').innerHTML = '<p style="color:red;">Ошибка загрузки данных. Попробуйте позже.</p>';
             }
         }
 
         loadExcel();
 
-        // Преобразование даты из формата дд/мм или дд.мм в "день месяц"
         function formatDate(raw) {
             const parts = raw.split(/[\/\.]/);
-            if (parts.length !== 2) return raw;
-            const day = parseInt(parts[0], 10);
-            const monthNum = parseInt(parts[1], 10);
-            const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
-                           'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-            if (isNaN(day) || monthNum < 1 || monthNum > 12) return raw;
-            return day + ' ' + months[monthNum - 1];
+            if (parts.length === 3) {
+                const day = parseInt(parts[0], 10);
+                const monthNum = parseInt(parts[1], 10);
+                const year = 2000 + parseInt(parts[2], 10);
+                const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+                               'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+                if (isNaN(day) || monthNum < 1 || monthNum > 12) return raw;
+                return day + ' ' + months[monthNum - 1] + ' ' + year;
+            } else if (parts.length === 2) {
+                const day = parseInt(parts[0], 10);
+                const monthNum = parseInt(parts[1], 10);
+                const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+                               'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+                if (isNaN(day) || monthNum < 1 || monthNum > 12) return raw;
+                return day + ' ' + months[monthNum - 1];
+            }
+            return raw;
         }
 
-        // Извлечение ссылок превью из строки с разделителем ||
         function extractPreviewLinks(raw) {
             const parts = raw.split('||').map(s => s.trim());
             const previews = parts.slice(1).filter(link => link.startsWith('http'));
@@ -570,23 +557,21 @@
                 const sheet = workbook.Sheets[sheetName];
                 csvData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
             } catch (err) {
-                console.error(err);
-                alert('Не удалось загрузить свежие данные. Проверьте соединение.');
+                alert('Не удалось загрузить свежие данные.');
                 return;
             }
 
             // Карта дат
-            const dateMap = {};
+            dateMap = {};   // перезаписываем глобальную
             let lastDate = null;
             for (let i = 1; i < csvData.length; i++) {
                 const firstCell = String(csvData[i][0] || '').trim();
-                if (/^\d{2}[\/\.]\d{2}$/.test(firstCell)) {
+                if (/^\d{2}[\/\.]\d{2}([\/\.]\d{2})?$/.test(firstCell)) {
                     lastDate = formatDate(firstCell);
                 }
                 dateMap[i] = lastDate;
             }
 
-            // Собираем строки: активные (обычные) и истекшие (с /?)
             const activeRows = [];
             const expiredRows = [];
             for (let i = 1; i < csvData.length; i++) {
@@ -594,16 +579,12 @@
                 if (rawCode.startsWith('/')) {
                     if (rawCode.startsWith('/?')) {
                         const realCode = rawCode.substring(2).trim();
-                        if (realCode === code) {
-                            expiredRows.push({ row: csvData[i], index: i });
-                        }
+                        if (realCode === code) expiredRows.push({ row: csvData[i], index: i });
                     }
                     continue;
                 }
-                if (/^\d{2}[\/\.]\d{2}$/.test(rawCode)) continue;
-                if (rawCode === code) {
-                    activeRows.push({ row: csvData[i], index: i });
-                }
+                if (/^\d{2}[\/\.]\d{2}([\/\.]\d{2})?$/.test(rawCode)) continue;
+                if (rawCode === code) activeRows.push({ row: csvData[i], index: i });
             }
 
             const now = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
@@ -611,49 +592,30 @@
             if (activeRows.length === 0 && expiredRows.length === 0) {
                 failedCount++;
                 localStorage.setItem(STORAGE_KEY, failedCount);
-
-                const text = `❌ Неверный пароль\nПароль: ${code}\nВремя: ${now}`;
-                sendAlert(text);
-
+                sendAlert(`❌ Неверный пароль\nПароль: ${code}\nВремя: ${now}`);
                 if (failedCount >= 3) {
                     localStorage.removeItem(STORAGE_KEY);
                     showContactForm(code);
                     return;
                 }
-
-                if (failedCount === 1) {
-                    alert('Данный пароль ещё не внесён в базу данных или неверный. Пожалуйста, попробуйте ввести пароль через 12 часов или проверьте последние цифры номера телефона в договоре (он же пароль).');
-                } else if (failedCount === 2) {
-                    alert('Упс-с ... скорее всего пароль ещё не внесли в базу. Обычно это занимает до 36 часов после сплава).');
-                }
+                alert('Пароль не найден.');
                 return;
             }
 
             localStorage.removeItem(STORAGE_KEY);
 
-            // Извлекаем номер телефона клиента
             let clientPhone = '';
             const allFoundRows = activeRows.length > 0 ? activeRows : expiredRows;
             for (const item of allFoundRows) {
                 const phone = extractClientPhone(item.row);
-                if (phone) {
-                    clientPhone = phone;
-                    break;
-                }
+                if (phone) { clientPhone = phone; break; }
             }
 
-            // Сбор дат
             const datesSet = new Set();
             if (activeRows.length > 0) {
-                for (const item of activeRows) {
-                    const d = dateMap[item.index];
-                    if (d) datesSet.add(d);
-                }
+                for (const item of activeRows) { const d = dateMap[item.index]; if (d) datesSet.add(d); }
             } else if (expiredRows.length > 0) {
-                for (const item of expiredRows) {
-                    const d = dateMap[item.index];
-                    if (d) datesSet.add(d);
-                }
+                for (const item of expiredRows) { const d = dateMap[item.index]; if (d) datesSet.add(d); }
             }
             let dateInfo = '';
             if (datesSet.size > 0) {
@@ -662,18 +624,13 @@
             }
 
             if (activeRows.length === 0 && expiredRows.length > 0) {
-                let expiredText = `⏳ Клиент вошёл по истёкшему паролю\nПароль: ${code}`;
-                if (dateInfo) expiredText += `\n${dateInfo}`;
-                if (clientPhone) expiredText += `\n📞 Клиент: ${clientPhone}`;
-                expiredText += `\nВремя: ${now}`;
-                sendAlert(expiredText);
+                sendAlert(`⏳ Истёкший пароль: ${code}\n${dateInfo}`);
                 showExpiredPasswordMessage();
                 return;
             }
 
             const allItems = [];
             const seenLinks = new Set();
-
             for (const item of activeRows) {
                 const row = item.row;
                 const rowIndex = item.index;
@@ -683,113 +640,81 @@
                     let raw = String(row[c] || '').trim();
                     if (!raw) continue;
 
-                    // Проверка на знак "*"
                     if (raw === '*') {
-                        let name = csvData[0][c] ? String(csvData[0][c]).trim() : '';
-                        if (!name) name = 'Папка ' + (allItems.length + 1);
+                        let name = csvData[0][c] ? String(csvData[0][c]).trim() : 'Папка';
                         const uniqueKey = 'PENDING:' + name + rowDate;
                         if (!seenLinks.has(uniqueKey)) {
                             seenLinks.add(uniqueKey);
-                            allItems.push({
-                                name: name,
-                                pending: true,
-                                rowDate: rowDate
-                            });
+                            allItems.push({ name, pending: true, rowDate });
                         }
                         continue;
                     }
 
-                    let expired = false;
-                    let isPreview = false;
-                    let isNotMine = false;
-                    let mainLink = '';
-                    let previewLinks = [];
-
-                    if (raw.startsWith('!')) {
-                        expired = true;
-                        raw = raw.substring(1).trim();
-                        if (!raw || !raw.startsWith('http')) continue;
-                    } else if (raw.startsWith('?')) {
-                        isPreview = true;
-                        raw = raw.substring(1).trim();
-                        if (!raw || !raw.startsWith('http')) continue;
-                        const extracted = extractPreviewLinks(raw);
-                        mainLink = extracted.mainLink;
-                        previewLinks = extracted.previews;
-                    } else if (raw.startsWith('%')) {
-                        isNotMine = true;
-                        raw = raw.substring(1).trim();
-                        if (!raw || !raw.startsWith('http')) continue;
-                    }
-
+                    let expired = false, isPreview = false, isNotMine = false, mainLink = '', previewLinks = [];
+                    if (raw.startsWith('!')) { expired = true; raw = raw.substring(1).trim(); if (!raw || !raw.startsWith('http')) continue; }
+                    else if (raw.startsWith('?')) { isPreview = true; raw = raw.substring(1).trim(); if (!raw || !raw.startsWith('http')) continue; const ext = extractPreviewLinks(raw); mainLink = ext.mainLink; previewLinks = ext.previews; }
+                    else if (raw.startsWith('%')) { isNotMine = true; raw = raw.substring(1).trim(); if (!raw || !raw.startsWith('http')) continue; }
                     let link = isPreview ? mainLink : raw;
                     let name = '';
-
-                    if (link.includes('|')) {
-                        const parts = link.split('|');
-                        link = parts[0].trim();
-                        name = parts[1] ? parts[1].trim() : (csvData[0][c] ? String(csvData[0][c]).trim() : '');
-                    } else {
-                        name = csvData[0][c] ? String(csvData[0][c]).trim() : '';
-                    }
-
+                    if (link.includes('|')) { const parts = link.split('|'); link = parts[0].trim(); name = parts[1] ? parts[1].trim() : (csvData[0][c] ? String(csvData[0][c]).trim() : ''); }
+                    else name = csvData[0][c] ? String(csvData[0][c]).trim() : '';
                     if (!link.startsWith('http')) continue;
                     if (!name) name = 'Папка ' + (allItems.length + 1);
-
                     const uniqueKey = (expired ? 'EXPIRED:' : (isPreview ? 'PREVIEW:' : (isNotMine ? 'NOTMINE:' : ''))) + name + rowDate;
                     if (seenLinks.has(uniqueKey)) continue;
                     seenLinks.add(uniqueKey);
-
-                    if (expired) {
-                        let alertText = `⏰ Истёкшая ссылка\nПароль: ${code}\nУслуга: ${name}`;
-                        if (rowDate) alertText += `\nДата сплава: ${rowDate}`;
-                        if (clientPhone) alertText += `\n📞 Клиент: ${clientPhone}`;
-                        alertText += `\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
-                        sendAlert(alertText);
-                    }
-
-                    allItems.push({
-                        link: link,
-                        name: name,
-                        expired: expired,
-                        isPreview: isPreview,
-                        isNotMine: isNotMine,
-                        rowDate: rowDate,
-                        previews: previewLinks
-                    });
+                    allItems.push({ link, name, expired, isPreview, isNotMine, rowDate, previews });
                 }
             }
 
             if (allItems.length === 0) {
-                let noFilesText = `📭 Клиент вошёл, но файлы отсутствуют\nПароль: ${code}`;
-                if (dateInfo) noFilesText += `\n${dateInfo}`;
-                if (clientPhone) noFilesText += `\n📞 Клиент: ${clientPhone}`;
-                noFilesText += `\nВремя: ${now}`;
-                sendAlert(noFilesText);
+                sendAlert(`📭 Файлы отсутствуют: ${code}`);
                 showNoFilesMessage();
-                return;
-            }
-
-            let hasOnlyPending = allItems.every(item => item.pending);
-            if (hasOnlyPending) {
-                const pendingInfo = '⏳ Услуги ещё не готовы';
-                sendNotification(code, allItems.length, 'success', pendingInfo, clientPhone);
-                showResult(allItems, activeRows.length > 1);
                 return;
             }
 
             const isMerged = activeRows.length > 1;
             if (isMerged) {
-                let mergedText = `ℹ️ Объединены заказы\nПароль: ${code}\nКоличество строк: ${activeRows.length}`;
-                if (dateInfo) mergedText += `\n${dateInfo}`;
-                if (clientPhone) mergedText += `\n📞 Клиент: ${clientPhone}`;
-                mergedText += `\nВремя: ${now}`;
-                sendAlert(mergedText);
+                sendAlert(`ℹ️ Объединены заказы\nПароль: ${code}\n${dateInfo}`);
             }
 
             sendNotification(code, allItems.length, 'success', dateInfo, clientPhone);
-            showResult(allItems, isMerged);
-            showInstructorPopupIfNeeded(code);   // ← добавить эту строку
+
+            // Если несколько дат – показываем выбор даты, иначе сразу ссылки и окно оценки
+            if (datesSet.size > 1) {
+                showDateSelection(Array.from(datesSet), allItems, activeRows, code, clientPhone);
+            } else {
+                showResult(allItems, isMerged);
+                showInstructorPopupIfNeeded(code);
+            }
+        }
+
+        // Функция выбора даты (глобальная)
+        function showDateSelection(dates, allItems, activeRows, code, clientPhone) {
+            document.getElementById('form-block').style.display = 'none';
+            const resultBlock = document.getElementById('result-block');
+            resultBlock.style.display = 'block';
+            document.getElementById('merge-warning').style.display = 'none';
+            const container = document.getElementById('links-list');
+            container.innerHTML = `
+                <div style="text-align:center; padding:20px;">
+                    <h3>У вас несколько сплавов. Выберите дату:</h3>
+                    <div id="date-buttons"></div>
+                </div>`;
+            const btnContainer = document.getElementById('date-buttons');
+            dates.forEach(date => {
+                const btn = document.createElement('button');
+                btn.textContent = date;
+                btn.style.cssText = 'margin:8px; padding:12px 24px; font-size:16px; background:#4CAF50; color:white; border:none; border-radius:8px; cursor:pointer;';
+                btn.onclick = function() {
+                    const filteredItems = allItems.filter(item => item.rowDate === date);
+                    const rowsForDate = activeRows.filter(item => dateMap[item.index] === date);
+                    const isMerged = rowsForDate.length > 1;
+                    showResult(filteredItems, isMerged);
+                    showInstructorPopupIfNeeded(code);
+                };
+                btnContainer.appendChild(btn);
+            });
         }
 
         function showResult(items, isMerged) {
@@ -808,14 +733,13 @@
                     dateStr = `<div style="font-size:13px; color:#888; margin-bottom:5px;">📅 ${item.rowDate}</div>`;
                 }
 
-                // Обработка pending-услуг
                 if (item.pending) {
                     container.innerHTML += `
                         <div class="link-item" style="background:#f9f9f9; border:1px solid #ddd;">
                             <div>
                                 <div class="link-name">${item.name}</div>
                                 ${dateStr}
-                                <div style="font-size:14px; color:#888; margin-bottom:4px;">⏳ Файлы ещё загружаются…</div>
+                                <div style="font-size:14px; color:#888;">⏳ Файлы ещё загружаются…</div>
                             </div>
                         </div>`;
                     continue;
@@ -827,10 +751,8 @@
                             <div>
                                 <div class="link-name">${item.name}</div>
                                 ${dateStr}
-                                <div style="font-size:14px; color:red; font-weight:bold; margin-bottom:8px;">Срок доступа истёк</div>
-                                <button onclick="requestExtension('${item.name}', '${item.rowDate}')" style="padding:6px 14px; font-size:13px; background:#ff9800; color:white; border:none; border-radius:4px; cursor:pointer;">
-                                    Запросить продление
-                                </button>
+                                <div style="color:red;">Срок доступа истёк</div>
+                                <button onclick="requestExtension('${item.name}', '${item.rowDate}')">Запросить продление</button>
                             </div>
                         </div>`;
                 } else if (item.isNotMine) {
@@ -839,10 +761,8 @@
                             <div>
                                 <div class="link-name">${item.name}</div>
                                 ${dateStr}
-                                <div style="font-size:14px; color:#d9534f; font-weight:bold; margin-bottom:8px;">Вы указали, что материалы не Ваши</div>
-                                <button onclick="returnMaterial('${item.name}', '${item.rowDate}')" style="padding:6px 14px; font-size:13px; background:#5bc0de; color:white; border:none; border-radius:4px; cursor:pointer;">
-                                    Это мои материалы 😢
-                                </button>
+                                <div style="color:#d9534f;">Вы указали, что материалы не Ваши</div>
+                                <button onclick="returnMaterial('${item.name}', '${item.rowDate}')">Это мои материалы 😢</button>
                             </div>
                         </div>`;
                 } else if (item.isPreview) {
@@ -858,20 +778,14 @@
                             <div style="flex:1;">
                                 <div class="link-name">${item.name}</div>
                                 ${dateStr}
-                                <div style="font-size:14px; color:#f57c00; font-weight:bold; margin-bottom:4px;">Доступно для дозаказа</div>
-                                ${price ? `<div style="font-size:14px; color:#f57c00; margin-bottom:8px;">Цена: ${price}</div>` : ''}
-                                <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;">
-                                    ${previewButtons}
-                                </div>
-                                <button onclick="showRepurchaseForm('${item.name}')" style="padding:6px 14px; font-size:13px; background:#ff9800; color:white; border:none; border-radius:4px; cursor:pointer;">
-                                    🔒 Дозаказать
-                                </button>
+                                <div style="color:#f57c00;">Доступно для дозаказа</div>
+                                ${price ? `<div style="color:#f57c00;">Цена: ${price}</div>` : ''}
+                                <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;">${previewButtons}</div>
+                                <button onclick="showRepurchaseForm('${item.name}')">🔒 Дозаказать</button>
                             </div>
                         </div>`;
                 } else {
-                    if (item.name === 'Фото') {
-                        hasPhotoService = true;
-                    }
+                    if (item.name === 'Фото') hasPhotoService = true;
                     container.innerHTML += `
                         <div class="link-item">
                             <div style="flex:1;">
@@ -879,9 +793,9 @@
                                 ${dateStr}
                                 <div style="font-size:13px; color:#888; word-break:break-all;">${item.link}</div>
                             </div>
-                            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                            <div>
                                 <a class="btn" href="${item.link}" target="_blank">Перейти</a>
-                                ${item.name !== 'Фото' ? `<button onclick="reportWrongLink('${item.name}', '${item.rowDate}')" style="padding:6px 12px; font-size:13px; background:#d9534f; color:white; border:none; border-radius:4px; cursor:pointer;" title="Сообщить об ошибочной ссылке">Не моё</button>` : ''}
+                                ${item.name !== 'Фото' ? `<button onclick="reportWrongLink('${item.name}', '${item.rowDate}')" style="padding:6px 12px; font-size:13px; background:#d9534f; color:white; border:none; border-radius:4px; cursor:pointer;">Не моё</button>` : ''}
                             </div>
                         </div>`;
                 }
@@ -892,12 +806,10 @@
                     <div class="link-item" style="background:#fffbe6; border:1px solid #ffe082;">
                         <div style="flex:1;">
                             <div class="link-name">Не получается скачать фото с Яндекс-диска!?</div>
-                            <div style="font-size:14px; color:#f57c00; font-weight:bold; margin-bottom:4px;">Платная услуга:</div>
-                            <div style="font-size:14px; color:#333; margin-bottom:8px;">"Отправить все фото моей лодки через мессенджер MAX"</div>
-                            <div style="font-size:14px; color:#f57c00; font-weight:bold; margin-bottom:8px;">Цена: 500 руб.</div>
-                            <button onclick="showTelegramMaxForm()" style="padding:6px 14px; font-size:13px; background:#2196F3; color:white; border:none; border-radius:4px; cursor:pointer;">
-                                📨 Заказать
-                            </button>
+                            <div style="color:#f57c00; font-weight:bold;">Платная услуга:</div>
+                            <div>"Отправить все фото моей лодки через мессенджер MAX"</div>
+                            <div style="color:#f57c00;">Цена: 500 руб.</div>
+                            <button onclick="showTelegramMaxForm()">📨 Заказать</button>
                         </div>
                     </div>`;
             }
@@ -906,182 +818,103 @@
         function returnMaterial(serviceName, dateStr = '') {
             const code = document.getElementById('code').value.trim() || 'неизвестен';
             let dateInfo = dateStr ? `\nДата сплава: ${dateStr}` : '';
-            const text = `😢 Клиент хочет вернуть материалы\nПароль: ${code}\nУслуга: ${serviceName}${dateInfo}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
-            sendAlert(text);
-            alert('✅ Ваша заявка отправлена! Материалы станут доступны в течение 24 часов.');
+            sendAlert(`😢 Клиент хочет вернуть материалы\nПароль: ${code}\nУслуга: ${serviceName}${dateInfo}`);
+            alert('✅ Ваша заявка отправлена!');
         }
 
         function showTelegramMaxForm() {
             const container = document.getElementById('links-list');
             container.innerHTML = `
                 <div style="background:#fff; border-radius:12px; padding:25px; text-align:left;">
-                    <h3 style="text-align:center; color:#333; margin-bottom:20px;">"Отправить все фото моей лодки через мессенджер MAX"</h3>
-                    <p style="text-align:center; color:#666;">Пожалуйста, укажите ваш номер телефона.</p>
-                    <p style="text-align:center; color:#666;">Мы отправим все ваши фото через мессенджер MAX в течение 12 часов.</p>
-                    
-                    <label style="display:block; margin-top:15px; font-weight:bold;">Номер телефона для связи *</label>
-                    <div style="display:flex; align-items:center; margin-top:5px;">
-                        <span style="padding:10px; background:#eee; border:1px solid #ccc; border-radius:6px 0 0 6px; font-size:16px;">+7</span>
-                        <input type="tel" id="telegrammax-phone" placeholder="(___) ___-__-__" required style="flex:1; padding:10px; border:1px solid #ccc; border-left:none; border-radius:0 6px 6px 0; font-size:16px;">
+                    <h3 style="text-align:center;">"Отправить все фото моей лодки через мессенджер MAX"</h3>
+                    <p>Укажите номер телефона.</p>
+                    <label>Номер телефона *</label>
+                    <div style="display:flex;">
+                        <span style="padding:10px; background:#eee; border:1px solid #ccc; border-radius:6px 0 0 6px;">+7</span>
+                        <input type="tel" id="telegrammax-phone" placeholder="(___) ___-__-__" style="flex:1; padding:10px; border:1px solid #ccc; border-left:none; border-radius:0 6px 6px 0;">
                     </div>
-                    
-                    <button onclick="submitTelegramMax()" style="width:100%; margin-top:20px; padding:12px; background:#2196F3; color:white; border:none; border-radius:8px; font-size:16px; cursor:pointer;">
-                        Отправить заявку
-                    </button>
-                    <p style="font-size:12px; color:#999; margin-top:8px;">* — обязательное поле</p>
+                    <button onclick="submitTelegramMax()" style="width:100%; margin-top:20px; padding:12px; background:#2196F3; color:white; border:none; border-radius:8px; font-size:16px;">Отправить заявку</button>
                 </div>`;
         }
 
         function submitTelegramMax() {
             const fullPhone = getFullPhoneFromInput('telegrammax-phone');
-            if (fullPhone === '+7') {
-                alert('Пожалуйста, укажите номер телефона. Это обязательно.');
-                return;
-            }
+            if (fullPhone === '+7') { alert('Укажите номер телефона.'); return; }
             const code = document.getElementById('code').value.trim() || 'неизвестен';
-            const text = `📨 Запрос на Telegram MAX\nПароль: ${code}\nТелефон: ${fullPhone}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
-            sendAlert(text);
-            
-            document.getElementById('links-list').innerHTML = `
-                <div style="background:#fff; border-radius:12px; padding:30px; text-align:center;">
-                    <h3 style="color:#4CAF50;">✅ Спасибо!</h3>
-                    <p style="color:#666; margin-top:15px;">В течение 12 часов мы отправим все ваши фото через мессенджер MAX на указанный номер.</p>
-                </div>`;
+            sendAlert(`📨 Запрос на Telegram MAX\nПароль: ${code}\nТелефон: ${fullPhone}`);
+            document.getElementById('links-list').innerHTML = '<div style="text-align:center; padding:30px;"><h3>✅ Спасибо!</h3><p>В течение 12 часов отправим фото.</p></div>';
         }
 
         function reportWrongLink(serviceName, dateStr = '') {
             const code = document.getElementById('code').value.trim() || 'неизвестен';
-            let dateInfo = dateStr ? `\nДата сплава: ${dateStr}` : '';
-            const text = `⚠️ Клиент сообщил: не его материалы\nПароль: ${code}\nУслуга: ${serviceName}${dateInfo}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
-            sendAlert(text);
+            sendAlert(`⚠️ Клиент сообщил: не его материалы\nПароль: ${code}\nУслуга: ${serviceName}\nДата: ${dateStr}`);
             alert('Спасибо! Мы проверим ссылку.');
         }
 
         function requestExtension(serviceName, dateStr = '') {
             const code = document.getElementById('code').value.trim() || 'неизвестен';
-            let dateInfo = dateStr ? `\nДата сплава: ${dateStr}` : '';
-            const text = `🔁 Запрос на продление\nПароль: ${code}\nУслуга: ${serviceName}${dateInfo}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
-            sendAlert(text);
-            alert('Запрос на продление отправлен. Ссылки будут доступны через 12 часов.');
+            sendAlert(`🔁 Запрос на продление\nПароль: ${code}\nУслуга: ${serviceName}\nДата: ${dateStr}`);
+            alert('Запрос отправлен. Ссылки будут доступны через 12 часов.');
         }
 
         function showContactForm(code) {
             document.getElementById('form-block').style.display = 'none';
             document.getElementById('result-block').style.display = 'block';
             document.getElementById('merge-warning').style.display = 'none';
-
             const container = document.getElementById('links-list');
             container.innerHTML = `
-                <div style="background:#fff; border-radius:12px; padding:25px; text-align:left;">
-                    <h3 style="text-align:center; color:#333; margin-bottom:20px;">Пароль не найден</h3>
-                    <p style="text-align:center; color:#666;">Пожалуйста, укажите ваши данные.</p>
-                    <p style="text-align:center; color:#666;">Мы уточним информацию и свяжемся с вами.</p>
-                    
-                    <label style="display:block; margin-top:15px; font-weight:bold;">Дата сплава:</label>
-                    <input type="date" id="contact-date" style="width:100%; padding:10px; margin-top:5px; border:1px solid #ccc; border-radius:6px;">
-                    
-                    <label style="display:block; margin-top:15px; font-weight:bold;">Время сплава:</label>
-                    <input type="time" id="contact-time" style="width:100%; padding:10px; margin-top:5px; border:1px solid #ccc; border-radius:6px;">
-                    
-                    <label style="display:block; margin-top:15px; font-weight:bold;">Фамилия клиента (кто подписывал договор):</label>
-                    <input type="text" id="contact-surname" placeholder="Фамилия" style="width:100%; padding:10px; margin-top:5px; border:1px solid #ccc; border-radius:6px;">
-                    
-                    <label style="display:block; margin-top:15px; font-weight:bold;">Номер телефона для связи *</label>
-                    <div style="display:flex; align-items:center; margin-top:5px;">
-                        <span style="padding:10px; background:#eee; border:1px solid #ccc; border-radius:6px 0 0 6px; font-size:16px;">+7</span>
-                        <input type="tel" id="contact-phone" placeholder="(___) ___-__-__" required style="flex:1; padding:10px; border:1px solid #ccc; border-left:none; border-radius:0 6px 6px 0; font-size:16px;">
-                    </div>
-                    
-                    <button onclick="submitContactForm('${code}')" style="width:100%; margin-top:20px; padding:12px; background:#4CAF50; color:white; border:none; border-radius:8px; font-size:16px; cursor:pointer;">
-                        Отправить
-                    </button>
+                <div style="background:#fff; border-radius:12px; padding:25px;">
+                    <h3>Пароль не найден</h3>
+                    <p>Укажите ваши данные.</p>
+                    <label>Дата сплава:</label><input type="date" id="contact-date" style="width:100%; padding:10px; margin-top:5px; border:1px solid #ccc; border-radius:6px;">
+                    <label>Время сплава:</label><input type="time" id="contact-time" style="width:100%; padding:10px; margin-top:5px; border:1px solid #ccc; border-radius:6px;">
+                    <label>Фамилия:</label><input type="text" id="contact-surname" placeholder="Фамилия" style="width:100%; padding:10px; margin-top:5px; border:1px solid #ccc; border-radius:6px;">
+                    <label>Номер телефона *</label>
+                    <div style="display:flex;"><span style="padding:10px; background:#eee; border:1px solid #ccc; border-radius:6px 0 0 6px;">+7</span><input type="tel" id="contact-phone" placeholder="(___) ___-__-__" style="flex:1; padding:10px; border:1px solid #ccc; border-left:none; border-radius:0 6px 6px 0;"></div>
+                    <button onclick="submitContactForm('${code}')" style="width:100%; margin-top:20px; padding:12px; background:#4CAF50; color:white; border:none; border-radius:8px;">Отправить</button>
                 </div>`;
         }
 
         function submitContactForm(code) {
             const fullPhone = getFullPhoneFromInput('contact-phone');
-            if (fullPhone === '+7') {
-                alert('Пожалуйста, укажите номер телефона. Это обязательно.');
-                return;
-            }
+            if (fullPhone === '+7') { alert('Укажите номер телефона.'); return; }
             const date = document.getElementById('contact-date').value || 'не указано';
             const time = document.getElementById('contact-time').value || 'не указано';
             const surname = document.getElementById('contact-surname').value.trim() || 'не указано';
-
-            const text = `📋 Новый запрос\nПароль: ${code}\nДата сплава: ${date}\nВремя сплава: ${time}\nФамилия: ${surname}\nТелефон: ${fullPhone}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
-            sendAlert(text);
-
-            document.getElementById('links-list').innerHTML = `
-                <div style="background:#fff; border-radius:12px; padding:30px; text-align:center;">
-                    <h3 style="color:#4CAF50;">✅ Спасибо!</h3>
-                    <p style="color:#666; margin-top:15px;">Мы уточним данные и напишем по номеру, который указан в договоре, в течение 12 часов!</p>
-                </div>`;
+            sendAlert(`📋 Новый запрос\nПароль: ${code}\nДата: ${date}\nВремя: ${time}\nФамилия: ${surname}\nТелефон: ${fullPhone}`);
+            document.getElementById('links-list').innerHTML = '<div style="text-align:center; padding:30px;"><h3>✅ Спасибо!</h3><p>Мы свяжемся с вами.</p></div>';
         }
 
         function showNoFilesMessage() {
             document.getElementById('form-block').style.display = 'none';
             document.getElementById('result-block').style.display = 'block';
-            document.getElementById('merge-warning').style.display = 'none';
-
-            const container = document.getElementById('links-list');
-            container.innerHTML = `
-                <div style="text-align:center; padding:40px 20px; background:#fff; border-radius:12px;">
-                    <div style="font-size:48px; margin-bottom:20px;">⏳</div>
-                    <p style="font-size:20px; color:#333; font-weight:bold; margin-bottom:10px;">Упс…</p>
-                    <p style="font-size:16px; color:#888;">к сожалению файлы ещё грузятся…</p>
-                </div>`;
+            document.getElementById('links-list').innerHTML = '<div style="text-align:center; padding:40px;"><div style="font-size:48px;">⏳</div><p>Файлы ещё загружаются…</p></div>';
         }
 
         function showExpiredPasswordMessage() {
             document.getElementById('form-block').style.display = 'none';
             document.getElementById('result-block').style.display = 'block';
-            document.getElementById('merge-warning').style.display = 'none';
-
-            const container = document.getElementById('links-list');
-            container.innerHTML = `
-                <div style="text-align:center; padding:40px 20px; background:#fff; border-radius:12px;">
-                    <div style="font-size:48px; margin-bottom:20px;">⏳</div>
-                    <p style="font-size:20px; color:#333; font-weight:bold; margin-bottom:10px;">К сожалению</p>
-                    <p style="font-size:16px; color:#888;">сроки доступа Вашего пароля истекли</p>
-                </div>`;
+            document.getElementById('links-list').innerHTML = '<div style="text-align:center; padding:40px;"><div style="font-size:48px;">⏳</div><p>Срок доступа истёк</p></div>';
         }
 
         function showRepurchaseForm(serviceName) {
             const container = document.getElementById('links-list');
             container.innerHTML = `
                 <div style="background:#fff; border-radius:12px; padding:25px; text-align:left;">
-                    <h3 style="text-align:center; color:#333; margin-bottom:20px;">Дозаказ услуги "${serviceName}"</h3>
-                    <p style="text-align:center; color:#666;">Пожалуйста, укажите ваш номер телефона.</p>
-                    <p style="text-align:center; color:#666;">Мы проверим возможность дозаказа и пришлём вам СМС в течение 12 часов.</p>
-                    
-                    <label style="display:block; margin-top:15px; font-weight:bold;">Номер телефона для связи *</label>
-                    <div style="display:flex; align-items:center; margin-top:5px;">
-                        <span style="padding:10px; background:#eee; border:1px solid #ccc; border-radius:6px 0 0 6px; font-size:16px;">+7</span>
-                        <input type="tel" id="repurchase-phone" placeholder="(___) ___-__-__" required style="flex:1; padding:10px; border:1px solid #ccc; border-left:none; border-radius:0 6px 6px 0; font-size:16px;">
-                    </div>
-                    
-                    <button onclick="submitRepurchase('${serviceName}')" style="width:100%; margin-top:20px; padding:12px; background:#4CAF50; color:white; border:none; border-radius:8px; font-size:16px; cursor:pointer;">
-                        Отправить заявку
-                    </button>
-                    <p style="font-size:12px; color:#999; margin-top:8px;">* — обязательное поле</p>
+                    <h3>Дозаказ услуги "${serviceName}"</h3>
+                    <p>Укажите номер телефона.</p>
+                    <label>Номер телефона *</label>
+                    <div style="display:flex;"><span style="padding:10px; background:#eee; border:1px solid #ccc; border-radius:6px 0 0 6px;">+7</span><input type="tel" id="repurchase-phone" placeholder="(___) ___-__-__" style="flex:1; padding:10px; border:1px solid #ccc; border-left:none; border-radius:0 6px 6px 0;"></div>
+                    <button onclick="submitRepurchase('${serviceName}')" style="width:100%; margin-top:20px; padding:12px; background:#4CAF50; color:white; border:none; border-radius:8px;">Отправить заявку</button>
                 </div>`;
         }
 
         function submitRepurchase(serviceName) {
             const fullPhone = getFullPhoneFromInput('repurchase-phone');
-            if (fullPhone === '+7') {
-                alert('Пожалуйста, укажите номер телефона. Это обязательно.');
-                return;
-            }
+            if (fullPhone === '+7') { alert('Укажите номер телефона.'); return; }
             const code = document.getElementById('code').value.trim() || 'неизвестен';
-            const text = `🛒 Запрос на дозаказ\nПароль: ${code}\nУслуга: ${serviceName}\nТелефон: ${fullPhone}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
-            sendAlert(text);
-            
-            document.getElementById('links-list').innerHTML = `
-                <div style="background:#fff; border-radius:12px; padding:30px; text-align:center;">
-                    <h3 style="color:#4CAF50;">✅ Спасибо!</h3>
-                    <p style="color:#666; margin-top:15px;">В течение 12 часов мы проверим возможность дозаказа и пришлём вам СМС на указанный номер.</p>
-                </div>`;
+            sendAlert(`🛒 Запрос на дозаказ\nПароль: ${code}\nУслуга: ${serviceName}\nТелефон: ${fullPhone}`);
+            document.getElementById('links-list').innerHTML = '<div style="text-align:center; padding:30px;"><h3>✅ Спасибо!</h3><p>Мы проверим возможность дозаказа.</p></div>';
         }
 
         function toggleFaq(btn) {
@@ -1100,69 +933,57 @@
 
         function sendFeedback() {
             const fullPhone = getFullPhoneFromInput('feedback-phone');
-            if (fullPhone === '+7') {
-                alert('Пожалуйста, укажите номер телефона. Это обязательно.');
-                return;
-            }
+            if (fullPhone === '+7') { alert('Укажите номер телефона.'); return; }
             const msg = document.getElementById('feedback-msg').value.trim();
             if (!msg) { alert('Введите сообщение'); return; }
             const code = document.getElementById('code').value.trim() || 'без пароля';
-            const text = `💬 Сообщение от клиента\nПароль: ${code}\nТелефон: ${fullPhone}\nСообщение: ${msg}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
-            sendAlert(text);
-            
+            sendAlert(`💬 Сообщение от клиента\nПароль: ${code}\nТелефон: ${fullPhone}\nСообщение: ${msg}`);
             document.getElementById('feedback-form').style.display = 'none';
-            document.getElementById('feedback-result').innerText = '✅ Спасибо! Ваше сообщение отправлено.';
+            document.getElementById('feedback-result').innerText = '✅ Спасибо!';
         }
 
         function sendFeedback2() {
             const msg = document.getElementById('feedback-msg2').value.trim();
             if (!msg) { alert('Введите сообщение'); return; }
             const code = document.getElementById('code').value.trim() || 'без пароля';
-            const text = `💬 Сообщение от клиента\nПароль: ${code}\nСообщение: ${msg}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
-            sendAlert(text);
-            
+            sendAlert(`💬 Сообщение от клиента\nПароль: ${code}\nСообщение: ${msg}`);
             document.getElementById('feedback-form2').style.display = 'none';
-            document.getElementById('feedback-result2').innerText = '✅ Спасибо! Ваше сообщение отправлено.';
+            document.getElementById('feedback-result2').innerText = '✅ Спасибо!';
         }
-// Новая тема ntfy для голосов (если ещё нет — добавь в начало скрипта: const NTFY_VOTES = 'PolinaInstructorVotes';)
-// Показ окна оценки, если ещё не голосовали с этим паролем
-function showInstructorPopupIfNeeded(password) {
-    const key = 'voted_' + password;
-    if (localStorage.getItem(key)) return; // уже голосовали
-    document.getElementById('instructor-popup-overlay').style.display = 'flex';
-}
 
-// Обработчик нажатия кнопки
-function submitVote(voteType) {
-    const password = document.getElementById('code').value.trim();
-    if (!password) return;
-    const key = 'voted_' + password;
-    localStorage.setItem(key, voteType);
-    document.getElementById('instructor-popup-overlay').style.display = 'none';
+        function showInstructorPopupIfNeeded(password) {
+            const key = 'voted_' + password;
+            if (localStorage.getItem(key)) return;
+            document.getElementById('instructor-popup-overlay').style.display = 'flex';
+        }
 
-    // Отправляем в ntfy
-    const emoji = voteType === 'like' ? '👍' : '👎';
-    const text = `${emoji} Оценка инструктора: ${voteType === 'like' ? 'Понравился' : 'Не понравился'}\nПароль: ${password}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
-    fetch(`https://ntfy.sh/${NTFY_VOTES}`, { method: 'POST', body: text }).catch(err => console.error);
+        function submitVote(voteType) {
+            const password = document.getElementById('code').value.trim();
+            if (!password) return;
+            const key = 'voted_' + password;
+            localStorage.setItem(key, voteType);
+            document.getElementById('instructor-popup-overlay').style.display = 'none';
 
-    // Отправляем в Google Таблицу
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbw5Sxz_tyL-ST1UutHCKUW-6JWREhznI-bQH7hzv7W3ZjMVR6Y3NOfd35JfHd4DGq1aYQ/exec';
-    fetch(scriptURL, {
-        method: 'POST',
-        body: new URLSearchParams({
-            password: password,
-            vote: voteType
-        })
-    }).catch(err => console.error('Ошибка отправки в Google:', err));
-}
+            // ntfy
+            const emoji = voteType === 'like' ? '👍' : '👎';
+            const text = `${emoji} Оценка инструктора: ${voteType === 'like' ? 'Понравился' : 'Не понравился'}\nПароль: ${password}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+            fetch(`https://ntfy.sh/${NTFY_VOTES}`, { method: 'POST', body: text }).catch(err => console.error);
+
+            // Google Таблица
+            const scriptURL = 'https://script.google.com/macros/s/AKfycbw5Sxz_tyL-ST1UutHCKUW-6JWREhznI-bQH7hzv7W3ZjMVR6Y3NOfd35JfHd4DGq1aYQ/exec';
+            fetch(scriptURL, {
+                method: 'POST',
+                body: new URLSearchParams({ password: password, vote: voteType })
+            }).catch(err => console.error('Ошибка отправки в Google:', err));
+        }
     </script>
-<!-- Всплывающее окно оценки инструктора -->
-<div id="instructor-popup-overlay" class="instructor-popup-overlay">
-    <div class="instructor-popup">
-        <h3>🤔 Понравился ли вам инструктор?</h3>
-        <button class="vote-btn vote-like" onclick="submitVote('like')">👍 Да</button>
-        <button class="vote-btn vote-dislike" onclick="submitVote('dislike')">👎 Нет</button>
+    <!-- Всплывающее окно оценки инструктора -->
+    <div id="instructor-popup-overlay" class="instructor-popup-overlay">
+        <div class="instructor-popup">
+            <h3>🤔 Понравился ли вам инструктор?</h3>
+            <button class="vote-btn vote-like" onclick="submitVote('like')">👍 Да</button>
+            <button class="vote-btn vote-dislike" onclick="submitVote('dislike')">👎 Нет</button>
+        </div>
     </div>
-</div>
 </body>
 </html>
