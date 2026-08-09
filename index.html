@@ -199,43 +199,43 @@
             text-decoration: none;
         }
         .preview-btn:hover { background: #1976D2; }
-/* Всплывающее окно оценки инструктора */
-.instructor-popup-overlay {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5);
-    z-index: 1000;
-    justify-content: center;
-    align-items: center;
-}
-.instructor-popup {
-    background: white;
-    border-radius: 16px;
-    padding: 30px 20px;
-    max-width: 350px;
-    width: 90%;
-    text-align: center;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-}
-.instructor-popup h3 {
-    margin: 0 0 20px;
-    font-size: 20px;
-    color: #333;
-}
-.vote-btn {
-    padding: 12px 30px;
-    font-size: 20px;
-    border: none;
-    border-radius: 50px;
-    cursor: pointer;
-    margin: 10px;
-    font-weight: bold;
-    transition: transform 0.2s;
-}
-.vote-like { background: #4CAF50; color: white; }
-.vote-dislike { background: #f44336; color: white; }
-.vote-btn:active { transform: scale(0.95); }
+        /* Всплывающее окно оценки инструктора */
+        .instructor-popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .instructor-popup {
+            background: white;
+            border-radius: 16px;
+            padding: 30px 20px;
+            max-width: 350px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .instructor-popup h3 {
+            margin: 0 0 20px;
+            font-size: 20px;
+            color: #333;
+        }
+        .vote-btn {
+            padding: 12px 30px;
+            font-size: 20px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 10px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        .vote-like { background: #4CAF50; color: white; }
+        .vote-dislike { background: #f44336; color: white; }
+        .vote-btn:active { transform: scale(0.95); }
     </style>
 </head>
 <body>
@@ -448,6 +448,7 @@
         const NTFY_VOTES = 'PolinaInstructorVotes'; // тема для голосов
         const FILE_NAME = 'ФОТО дрон яндекс ссылки.xlsx';
         let csvData = [];
+        let dateMap = {};   // глобальная карта дат для showDateSelection
 
         // Отправка в основную тему (стандартные события)
         function sendNotification(code, itemCount, eventType, extraInfo = '', clientPhone = '') {
@@ -533,16 +534,26 @@
 
         loadExcel();
 
-        // Преобразование даты из формата дд/мм или дд.мм в "день месяц"
+        // Преобразование даты из формата дд/мм или дд.мм или дд/мм/гг в "день месяц год"
         function formatDate(raw) {
             const parts = raw.split(/[\/\.]/);
-            if (parts.length !== 2) return raw;
-            const day = parseInt(parts[0], 10);
-            const monthNum = parseInt(parts[1], 10);
-            const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
-                           'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-            if (isNaN(day) || monthNum < 1 || monthNum > 12) return raw;
-            return day + ' ' + months[monthNum - 1];
+            if (parts.length === 3) {
+                const day = parseInt(parts[0], 10);
+                const monthNum = parseInt(parts[1], 10);
+                const year = 2000 + parseInt(parts[2], 10);
+                const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+                               'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+                if (isNaN(day) || monthNum < 1 || monthNum > 12) return raw;
+                return day + ' ' + months[monthNum - 1] + ' ' + year;
+            } else if (parts.length === 2) {
+                const day = parseInt(parts[0], 10);
+                const monthNum = parseInt(parts[1], 10);
+                const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+                               'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+                if (isNaN(day) || monthNum < 1 || monthNum > 12) return raw;
+                return day + ' ' + months[monthNum - 1];
+            }
+            return raw;
         }
 
         // Извлечение ссылок превью из строки с разделителем ||
@@ -551,6 +562,39 @@
             const previews = parts.slice(1).filter(link => link.startsWith('http'));
             const mainLink = parts[0].startsWith('http') ? parts[0] : raw;
             return { mainLink, previews };
+        }
+
+        // Новая функция выбора даты
+        function showDateSelection(dates, allItems, activeRows, code, clientPhone, isExpiredMode = false) {
+            document.getElementById('form-block').style.display = 'none';
+            const resultBlock = document.getElementById('result-block');
+            resultBlock.style.display = 'block';
+            document.getElementById('merge-warning').style.display = 'none';
+            const container = document.getElementById('links-list');
+            container.innerHTML = `
+                <div style="text-align:center; padding:20px;">
+                    <h3>У вас несколько сплавов. Выберите дату:</h3>
+                    <div id="date-buttons"></div>
+                </div>`;
+            const btnContainer = document.getElementById('date-buttons');
+            dates.forEach(date => {
+                const btn = document.createElement('button');
+                btn.textContent = date;
+                btn.style.cssText = 'margin:8px; padding:12px 24px; font-size:16px; background:#4CAF50; color:white; border:none; border-radius:8px; cursor:pointer;';
+                btn.onclick = function() {
+                    if (isExpiredMode) {
+                        // Для истёкших паролей показываем сообщение об истечении
+                        showExpiredPasswordMessage();
+                    } else {
+                        const filteredItems = allItems.filter(item => item.rowDate === date);
+                        const rowsForDate = activeRows.filter(item => dateMap[item.index] === date);
+                        const isMerged = rowsForDate.length > 1;
+                        showResult(filteredItems, isMerged);
+                        showInstructorPopupIfNeeded(code);
+                    }
+                };
+                btnContainer.appendChild(btn);
+            });
         }
 
         async function checkCode() {
@@ -576,11 +620,11 @@
             }
 
             // Карта дат
-            const dateMap = {};
+            dateMap = {};   // перезаписываем глобальную
             let lastDate = null;
             for (let i = 1; i < csvData.length; i++) {
                 const firstCell = String(csvData[i][0] || '').trim();
-                if (/^\d{2}[\/\.]\d{2}$/.test(firstCell)) {
+                if (/^\d{2}[\/\.]\d{2}([\/\.]\d{2})?$/.test(firstCell)) {
                     lastDate = formatDate(firstCell);
                 }
                 dateMap[i] = lastDate;
@@ -600,7 +644,7 @@
                     }
                     continue;
                 }
-                if (/^\d{2}[\/\.]\d{2}$/.test(rawCode)) continue;
+                if (/^\d{2}[\/\.]\d{2}([\/\.]\d{2})?$/.test(rawCode)) continue;
                 if (rawCode === code) {
                     activeRows.push({ row: csvData[i], index: i });
                 }
@@ -661,13 +705,20 @@
                 dateInfo = (datesArr.length === 1 ? 'Дата сплава: ' : 'Даты сплавов: ') + datesArr.join(', ');
             }
 
+            // Обработка истёкших паролей (все строки помечены /?)
             if (activeRows.length === 0 && expiredRows.length > 0) {
                 let expiredText = `⏳ Клиент вошёл по истёкшему паролю\nПароль: ${code}`;
                 if (dateInfo) expiredText += `\n${dateInfo}`;
                 if (clientPhone) expiredText += `\n📞 Клиент: ${clientPhone}`;
                 expiredText += `\nВремя: ${now}`;
                 sendAlert(expiredText);
-                showExpiredPasswordMessage();
+
+                if (datesSet.size > 1) {
+                    // Несколько дат – предлагаем выбор, но показываем сообщение об истечении
+                    showDateSelection(Array.from(datesSet), [], expiredRows, code, clientPhone, true);
+                } else {
+                    showExpiredPasswordMessage();
+                }
                 return;
             }
 
@@ -788,8 +839,12 @@
             }
 
             sendNotification(code, allItems.length, 'success', dateInfo, clientPhone);
-            showResult(allItems, isMerged);
-            showInstructorPopupIfNeeded(code);   // ← добавить эту строку
+            if (datesSet.size > 1) {
+                showDateSelection(Array.from(datesSet), allItems, activeRows, code, clientPhone, false);
+            } else {
+                showResult(allItems, isMerged);
+                showInstructorPopupIfNeeded(code);
+            }
         }
 
         function showResult(items, isMerged) {
@@ -1124,45 +1179,45 @@
             document.getElementById('feedback-form2').style.display = 'none';
             document.getElementById('feedback-result2').innerText = '✅ Спасибо! Ваше сообщение отправлено.';
         }
-// Новая тема ntfy для голосов (если ещё нет — добавь в начало скрипта: const NTFY_VOTES = 'PolinaInstructorVotes';)
-// Показ окна оценки, если ещё не голосовали с этим паролем
-function showInstructorPopupIfNeeded(password) {
-    const key = 'voted_' + password;
-    if (localStorage.getItem(key)) return; // уже голосовали
-    document.getElementById('instructor-popup-overlay').style.display = 'flex';
-}
 
-// Обработчик нажатия кнопки
-function submitVote(voteType) {
-    const password = document.getElementById('code').value.trim();
-    if (!password) return;
-    const key = 'voted_' + password;
-    localStorage.setItem(key, voteType);
-    document.getElementById('instructor-popup-overlay').style.display = 'none';
+        // Показ окна оценки, если ещё не голосовали с этим паролем
+        function showInstructorPopupIfNeeded(password) {
+            const key = 'voted_' + password;
+            if (localStorage.getItem(key)) return; // уже голосовали
+            document.getElementById('instructor-popup-overlay').style.display = 'flex';
+        }
 
-    // Отправляем в ntfy
-    const emoji = voteType === 'like' ? '👍' : '👎';
-    const text = `${emoji} Оценка инструктора: ${voteType === 'like' ? 'Понравился' : 'Не понравился'}\nПароль: ${password}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
-    fetch(`https://ntfy.sh/${NTFY_VOTES}`, { method: 'POST', body: text }).catch(err => console.error);
+        // Обработчик нажатия кнопки
+        function submitVote(voteType) {
+            const password = document.getElementById('code').value.trim();
+            if (!password) return;
+            const key = 'voted_' + password;
+            localStorage.setItem(key, voteType);
+            document.getElementById('instructor-popup-overlay').style.display = 'none';
 
-    // Отправляем в Google Таблицу
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbw5Sxz_tyL-ST1UutHCKUW-6JWREhznI-bQH7hzv7W3ZjMVR6Y3NOfd35JfHd4DGq1aYQ/exec';
-    fetch(scriptURL, {
-        method: 'POST',
-        body: new URLSearchParams({
-            password: password,
-            vote: voteType
-        })
-    }).catch(err => console.error('Ошибка отправки в Google:', err));
-}
+            // Отправляем в ntfy
+            const emoji = voteType === 'like' ? '👍' : '👎';
+            const text = `${emoji} Оценка инструктора: ${voteType === 'like' ? 'Понравился' : 'Не понравился'}\nПароль: ${password}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+            fetch(`https://ntfy.sh/${NTFY_VOTES}`, { method: 'POST', body: text }).catch(err => console.error);
+
+            // Отправляем в Google Таблицу
+            const scriptURL = 'https://script.google.com/macros/s/AKfycbw5Sxz_tyL-ST1UutHCKUW-6JWREhznI-bQH7hzv7W3ZjMVR6Y3NOfd35JfHd4DGq1aYQ/exec';
+            fetch(scriptURL, {
+                method: 'POST',
+                body: new URLSearchParams({
+                    password: password,
+                    vote: voteType
+                })
+            }).catch(err => console.error('Ошибка отправки в Google:', err));
+        }
     </script>
-<!-- Всплывающее окно оценки инструктора -->
-<div id="instructor-popup-overlay" class="instructor-popup-overlay">
-    <div class="instructor-popup">
-        <h3>🤔 Понравился ли вам инструктор?</h3>
-        <button class="vote-btn vote-like" onclick="submitVote('like')">👍 Да</button>
-        <button class="vote-btn vote-dislike" onclick="submitVote('dislike')">👎 Нет</button>
+    <!-- Всплывающее окно оценки инструктора -->
+    <div id="instructor-popup-overlay" class="instructor-popup-overlay">
+        <div class="instructor-popup">
+            <h3>🤔 Понравился ли вам инструктор?</h3>
+            <button class="vote-btn vote-like" onclick="submitVote('like')">👍 Да</button>
+            <button class="vote-btn vote-dislike" onclick="submitVote('dislike')">👎 Нет</button>
+        </div>
     </div>
-</div>
 </body>
 </html>
