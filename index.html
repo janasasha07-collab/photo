@@ -443,12 +443,14 @@
             'инста 360': '1500 руб.'
         };
 
-        const NTFY_TOPIC = 'PolinaPhoto2026';       // основная тема (только успешный вход, Яндекс, 2ГИС)
+        const NTFY_OPOVESCHENIYA = 'PolinaNotifications'; // тема для рутинных оповещений (только успешный вход, Яндекс, 2ГИС)
         const NTFY_ALERTS = 'PolinaAlerts';         // тема для нестандартных оповещений
         const NTFY_VOTES = 'PolinaInstructorVotes'; // тема для голосов
         const FILE_NAME = 'ФОТО дрон яндекс ссылки.xlsx';
         let csvData = [];
-        let dateMap = {};   // глобальная карта дат для showDateSelection
+        let dateMap = {};
+        let currentClientPhone = '';
+        let currentClientDateInfo = '';   // глобальная карта дат для showDateSelection
 
         // Отправка в основную тему (стандартные события)
         function sendNotification(code, itemCount, eventType, extraInfo = '', clientPhone = '') {
@@ -473,7 +475,7 @@
                 return;
             }
 
-            fetch(`https://ntfy.sh/${NTFY_TOPIC}`, {
+            fetch(`https://ntfy.sh/${NTFY_OPOVESCHENIYA}`, {
                 method: 'POST',
                 body: text
             }).catch(err => console.error('Ошибка отправки:', err));
@@ -487,7 +489,15 @@
             }).catch(err => console.error('Ошибка отправки предупреждения:', err));
         }
 
-        // Вспомогательная функция: сборка полного номера из поля с префиксом +7
+        // Отправка в тему для рутинных оповещений (не требуют действий)
+function sendNotice(text) {
+    fetch(`https://ntfy.sh/${NTFY_OPOVESCHENIYA}`, {
+        method: 'POST',
+        body: text
+    }).catch(err => console.error('Ошибка отправки оповещения:', err));
+}
+
+     // Вспомогательная функция: сборка полного номера из поля с префиксом +7
         function getFullPhoneFromInput(inputId) {
             const input = document.getElementById(inputId);
             if (!input) return '';
@@ -656,7 +666,7 @@
                 localStorage.setItem(STORAGE_KEY, failedCount);
 
                 const text = `❌ Неверный пароль\nПароль: ${code}\nВремя: ${now}`;
-                sendAlert(text);
+                sendNotice(text);
 
                 if (failedCount >= 3) {
                     localStorage.removeItem(STORAGE_KEY);
@@ -704,13 +714,17 @@
                 dateInfo = (datesArr.length === 1 ? 'Дата сплава: ' : 'Даты сплавов: ') + datesArr.join(', ');
             }
 
+            // Сохраняем данные клиента для использования в других функциях
+            currentClientPhone = clientPhone;
+            currentClientDateInfo = dateInfo;
+
             // Обработка истёкших паролей (все строки помечены /?)
             if (activeRows.length === 0 && expiredRows.length > 0) {
                 let expiredText = `⏳ Клиент вошёл по истёкшему паролю\nПароль: ${code}`;
                 if (dateInfo) expiredText += `\n${dateInfo}`;
                 if (clientPhone) expiredText += `\n📞 Клиент: ${clientPhone}`;
                 expiredText += `\nВремя: ${now}`;
-                sendAlert(expiredText);
+                sendNotice(expiredText);
 
                 if (datesSet.size > 1) {
                     showDateSelection(Array.from(datesSet), [], expiredRows, code, clientPhone, true);
@@ -795,7 +809,7 @@
                         if (rowDate) alertText += `\nДата сплава: ${rowDate}`;
                         if (clientPhone) alertText += `\n📞 Клиент: ${clientPhone}`;
                         alertText += `\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
-                        sendAlert(alertText);
+                        sendNotice(alertText);
                     }
 
                     allItems.push({
@@ -834,7 +848,7 @@
                 if (dateInfo) mergedText += `\n${dateInfo}`;
                 if (clientPhone) mergedText += `\n📞 Клиент: ${clientPhone}`;
                 mergedText += `\nВремя: ${now}`;
-                sendAlert(mergedText);
+                sendNotice(mergedText);
             }
 
             sendNotification(code, allItems.length, 'success', dateInfo, clientPhone);
@@ -1169,31 +1183,41 @@
         }
 
         function sendFeedback() {
-            const fullPhone = getFullPhoneFromInput('feedback-phone');
-            if (fullPhone === '+7') {
-                alert('Пожалуйста, укажите номер телефона. Это обязательно.');
-                return;
-            }
-            const msg = document.getElementById('feedback-msg').value.trim();
-            if (!msg) { alert('Введите сообщение'); return; }
-            const code = document.getElementById('code').value.trim() || 'без пароля';
-            const text = `💬 Сообщение от клиента\nПароль: ${code}\nТелефон: ${fullPhone}\nСообщение: ${msg}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
-            sendAlert(text);
-            
-            document.getElementById('feedback-form').style.display = 'none';
-            document.getElementById('feedback-result').innerText = '✅ Спасибо! Ваше сообщение отправлено.';
-        }
+    const fullPhone = getFullPhoneFromInput('feedback-phone');
+    if (fullPhone === '+7') {
+        alert('Пожалуйста, укажите номер телефона. Это обязательно.');
+        return;
+    }
+    const msg = document.getElementById('feedback-msg').value.trim();
+    if (!msg) { alert('Введите сообщение'); return; }
+    const code = document.getElementById('code').value.trim() || 'без пароля';
+    
+    let extraInfo = '';
+    if (currentClientPhone) extraInfo += `\n📞 Клиент (из договора): ${currentClientPhone}`;
+    if (currentClientDateInfo) extraInfo += `\n${currentClientDateInfo}`;
+    
+    const text = `💬 Сообщение от клиента\nПароль: ${code}\nТелефон (из формы): ${fullPhone}${extraInfo}\nСообщение: ${msg}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+    sendAlert(text);
+    
+    document.getElementById('feedback-form').style.display = 'none';
+    document.getElementById('feedback-result').innerText = '✅ Спасибо! Ваше сообщение отправлено.';
+}
 
         function sendFeedback2() {
-            const msg = document.getElementById('feedback-msg2').value.trim();
-            if (!msg) { alert('Введите сообщение'); return; }
-            const code = document.getElementById('code').value.trim() || 'без пароля';
-            const text = `💬 Сообщение от клиента\nПароль: ${code}\nСообщение: ${msg}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
-            sendAlert(text);
-            
-            document.getElementById('feedback-form2').style.display = 'none';
-            document.getElementById('feedback-result2').innerText = '✅ Спасибо! Ваше сообщение отправлено.';
-        }
+    const msg = document.getElementById('feedback-msg2').value.trim();
+    if (!msg) { alert('Введите сообщение'); return; }
+    const code = document.getElementById('code').value.trim() || 'без пароля';
+    
+    let extraInfo = '';
+    if (currentClientPhone) extraInfo += `\n📞 Клиент (из договора): ${currentClientPhone}`;
+    if (currentClientDateInfo) extraInfo += `\n${currentClientDateInfo}`;
+    
+    const text = `💬 Сообщение от клиента\nПароль: ${code}${extraInfo}\nСообщение: ${msg}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+    sendAlert(text);
+    
+    document.getElementById('feedback-form2').style.display = 'none';
+    document.getElementById('feedback-result2').innerText = '✅ Спасибо! Ваше сообщение отправлено.';
+}
 
         // Показ окна оценки, если ещё не голосовали с этим паролем
         function showInstructorPopupIfNeeded(password) {
