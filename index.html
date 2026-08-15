@@ -481,22 +481,29 @@
             }).catch(err => console.error('Ошибка отправки:', err));
         }
 
+    function appendClientDateInfo(text) {
+    if (currentClientDateInfo && !text.includes('Дата сплава') && !text.includes('Даты сплавов')) {
+        text += `\n${currentClientDateInfo}`;
+    }
+    return text;
+}
         // Отправка в тему для нестандартных событий
         function sendAlert(text) {
-            fetch(`https://ntfy.sh/${NTFY_ALERTS}`, {
-                method: 'POST',
-                body: text
-            }).catch(err => console.error('Ошибка отправки предупреждения:', err));
-        }
+    text = appendClientDateInfo(text);  // ← добавляем дату и время сплава
+    fetch(`https://ntfy.sh/${NTFY_ALERTS}`, {
+        method: 'POST',
+        body: text
+    }).catch(err => console.error('Ошибка отправки предупреждения:', err));
+}
 
         // Отправка в тему для рутинных оповещений (не требуют действий)
 function sendNotice(text) {
+    text = appendClientDateInfo(text);  // ← добавляем дату и время сплава
     fetch(`https://ntfy.sh/${NTFY_OPOVESCHENIYA}`, {
         method: 'POST',
         body: text
     }).catch(err => console.error('Ошибка отправки оповещения:', err));
 }
-
      // Вспомогательная функция: сборка полного номера из поля с префиксом +7
         function getFullPhoneFromInput(inputId) {
             const input = document.getElementById(inputId);
@@ -814,7 +821,7 @@ function sendNotice(text) {
                     if (!link.startsWith('http')) continue;
                     if (!name) name = 'Папка ' + (allItems.length + 1);
 
-                    const uniqueKey = (expired ? 'EXPIRED:' : (isPreview ? 'PREVIEW:' : (isNotMine ? 'NOTMINE:' : ''))) + name + rowDate;
+                    const uniqueKey = (expired ? 'EXPIRED:' : (isPreview ? 'PREVIEW:' : (isNotMine ? 'NOTMINE:' : ''))) + name + rowDate + '|' + link;
                     if (seenLinks.has(uniqueKey)) continue;
                     seenLinks.add(uniqueKey);
 
