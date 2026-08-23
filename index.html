@@ -236,6 +236,29 @@
         .vote-like { background: #4CAF50; color: white; }
         .vote-dislike { background: #f44336; color: white; }
         .vote-btn:active { transform: scale(0.95); }
+.reason-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+.reason-btn {
+    padding: 8px 14px;
+    border: 1px solid #ddd;
+    background: #f9f9f9;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+    outline: none;
+    white-space: nowrap;
+}
+.reason-btn.selected {
+    background: #ffebee;
+    border-color: #f44336;
+    color: #c62828;
+}
     </style>
 </head>
 <body>
@@ -1295,8 +1318,13 @@ function sendNotice(text) {
 function showDislikeReasons() {
     document.getElementById('vote-question').style.display = 'none';
     document.getElementById('dislike-reasons').style.display = 'block';
+    document.querySelectorAll('.reason-btn').forEach(btn => {
+        btn.classList.remove('selected'); // сбрасываем прошлые отметки
+        btn.addEventListener('click', function() {
+            this.classList.toggle('selected');
+        });
+    });
 }
-
 // Возврат к исходному вопросу
 function goBackToVote() {
     document.getElementById('vote-question').style.display = 'block';
@@ -1309,8 +1337,8 @@ function submitDislikeWithReasons() {
     if (!password) return;
 
     // Собираем отмеченные причины
-    const checkboxes = document.querySelectorAll('.reason-checkbox:checked');
-    const reasons = Array.from(checkboxes).map(cb => cb.value).join(', ');
+   const selectedButtons = document.querySelectorAll('.reason-btn.selected');
+const reasons = Array.from(selectedButtons).map(btn => btn.dataset.value).join(', ');
     const reasonText = reasons ? `\nПричины: ${reasons}` : '';
 
     // 1) Отправляем обычный дизлайк в NTFY_VOTES (и Google Таблицу)
@@ -1351,17 +1379,17 @@ function submitDislikeWithReasons() {
 
         <!-- Шаг 2: Причины дизлайка (скрыт по умолчанию) -->
         <div id="dislike-reasons" style="display:none;">
-            <h3>Уточните, пожалуйста, что не так:</h3>
-            <div style="text-align:left; margin-bottom:15px;">
-                <label><input type="checkbox" value="скучный" class="reason-checkbox"> Скучный</label><br>
-                <label><input type="checkbox" value="грубый" class="reason-checkbox"> Грубый</label><br>
-                <label><input type="checkbox" value="с ним страшно" class="reason-checkbox"> С ним страшно</label><br>
-                <label><input type="checkbox" value="с ним опасно" class="reason-checkbox"> С ним опасно</label><br>
-                <label><input type="checkbox" value="неприятный тип" class="reason-checkbox"> Неприятный тип</label>
-            </div>
-            <button class="vote-btn" style="background:#f44336; color:white;" onclick="submitDislikeWithReasons()">Отправить</button>
-            <button class="vote-btn" style="background:#ccc; color:#333;" onclick="goBackToVote()">Назад</button>
-        </div>
+    <h3>Уточните, пожалуйста, что не так:</h3>
+    <div class="reason-buttons">
+        <button type="button" class="reason-btn" data-value="скучный">😴 Скучный</button>
+        <button type="button" class="reason-btn" data-value="грубый">😠 Грубый</button>
+        <button type="button" class="reason-btn" data-value="с ним страшно">😨 С ним страшно</button>
+        <button type="button" class="reason-btn" data-value="с ним опасно">⚠️ С ним опасно</button>
+        <button type="button" class="reason-btn" data-value="неприятный тип">😒 Неприятный тип</button>
+    </div>
+    <button class="vote-btn" style="background:#f44336; color:white;" onclick="submitDislikeWithReasons()">Отправить</button>
+    <button class="vote-btn" style="background:#ccc; color:#333;" onclick="goBackToVote()">Назад</button>
+</div>
     </div>
 </div>
 </body>
