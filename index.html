@@ -253,8 +253,34 @@
     transition: all 0.2s;
     outline: none;
     white-space: nowrap;
+    color: #333;                /* ← чтобы текст был виден всегда */
 }
+
+.reason-btn:hover {
+    background: #f9f9f9;        /* ← убираем зелёный при наведении */
+    border-color: #ddd;
+    color: #333;
+}
+
+.reason-btn:active {
+    background: #f9f9f9;        /* ← убираем зелёный при нажатии */
+    border-color: #ddd;
+    color: #333;
+}
+
 .reason-btn.selected {
+    background: #ffebee;
+    border-color: #f44336;
+    color: #c62828;
+}
+
+.reason-btn.selected:hover {
+    background: #ffebee;
+    border-color: #f44336;
+    color: #c62828;
+}
+
+.reason-btn.selected:active {
     background: #ffebee;
     border-color: #f44336;
     color: #c62828;
@@ -1320,9 +1346,9 @@ function showDislikeReasons() {
     document.getElementById('dislike-reasons').style.display = 'block';
     document.querySelectorAll('.reason-btn').forEach(btn => {
         btn.classList.remove('selected'); // сбрасываем прошлые отметки
-        btn.addEventListener('click', function() {
-            this.classList.toggle('selected');
-        });
+        btn.onclick = function() {
+    this.classList.toggle('selected');
+};
     });
 }
 // Возврат к исходному вопросу
