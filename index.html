@@ -872,13 +872,23 @@ function sendNotice(text) {
                 sendNotice(mergedText);
             }
 
-            sendNotification(code, allItems.length, 'success', dateInfo, clientPhone);
+                       sendNotification(code, allItems.length, 'success', dateInfo, clientPhone);
             if (datesSet.size > 1) {
                 showDateSelection(Array.from(datesSet), allItems, activeRows, code, clientPhone, false);
             } else {
                 showResult(allItems, isMerged);
                 showInstructorPopupIfNeeded(code);
             }
+        }
+
+        // Запрос на общий дозаказ
+        function requestGeneralRepurchase() {
+            const code = document.getElementById('code').value.trim() || 'неизвестен';
+            const phone = currentClientPhone || 'не указан';
+            const dateInfo = currentClientDateInfo || 'не указана';
+            const text = `🛒 Запрос на дозаказ (общий)\nПароль: ${code}\n📞 Клиент: ${phone}\n${dateInfo}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+            sendAlert(text);
+            alert('✅ Запрос отправлен! Мы проверим возможность дозаказа и свяжемся с вами.');
         }
 
         function showResult(items, isMerged) {
@@ -990,6 +1000,17 @@ function sendNotice(text) {
                         </div>
                     </div>`;
             }
+            // Предложение сделать дозаказ
+            container.innerHTML += `
+                <div class="link-item" style="background:#e3f2fd; border:1px solid #90caf9;">
+                    <div style="flex:1;">
+                        <div class="link-name">Хочу сделать дозаказ фото/видео</div>
+                        <div style="font-size:14px; color:#333; margin-bottom:8px;">Проверьте, пожалуйста, возможность дозаказа</div>
+                        <button onclick="requestGeneralRepurchase()" style="padding:6px 14px; font-size:13px; background:#2196F3; color:white; border:none; border-radius:4px; cursor:pointer;">
+                            Проверить
+                        </button>
+                    </div>
+                </div>`;
         }
 
         function returnMaterial(serviceName, dateStr = '') {
@@ -1270,14 +1291,78 @@ function sendNotice(text) {
                 })
             }).catch(err => console.error('Ошибка отправки в Google:', err));
         }
+// Показ причин дизлайка
+function showDislikeReasons() {
+    document.getElementById('vote-question').style.display = 'none';
+    document.getElementById('dislike-reasons').style.display = 'block';
+}
+
+// Возврат к исходному вопросу
+function goBackToVote() {
+    document.getElementById('vote-question').style.display = 'block';
+    document.getElementById('dislike-reasons').style.display = 'none';
+}
+
+// Отправка дизлайка с причинами
+function submitDislikeWithReasons() {
+    const password = document.getElementById('code').value.trim();
+    if (!password) return;
+
+    // Собираем отмеченные причины
+    const checkboxes = document.querySelectorAll('.reason-checkbox:checked');
+    const reasons = Array.from(checkboxes).map(cb => cb.value).join(', ');
+    const reasonText = reasons ? `\nПричины: ${reasons}` : '';
+
+    // 1) Отправляем обычный дизлайк в NTFY_VOTES (и Google Таблицу)
+    const voteType = 'dislike';
+    const emoji = '👎';
+    const voteText = `${emoji} Оценка инструктора: Не понравился\nПароль: ${password}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+    fetch(`https://ntfy.sh/${NTFY_VOTES}`, { method: 'POST', body: voteText }).catch(err => console.error);
+
+    // 2) Отправляем в Google Таблицу базовый голос
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbw5Sxz_tyL-ST1UutHCKUW-6JWREhznI-bQH7hzv7W3ZjMVR6Y3NOfd35JfHd4DGq1aYQ/exec';
+    fetch(scriptURL, {
+        method: 'POST',
+        body: new URLSearchParams({ password: password, vote: voteType })
+    }).catch(err => console.error('Ошибка отправки в Google:', err));
+
+    // 3) Отправляем расширенное уведомление в PolinaAlerts с причинами
+    const alertText = `👎 Клиент поставил дизлайк\nПароль: ${password}\n📞 Клиент: ${currentClientPhone || 'не указан'}\n${currentClientDateInfo || 'Дата не указана'}\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}${reasonText}`;
+    sendAlert(alertText);
+
+    // Закрываем окно и сохраняем факт голосования
+    localStorage.setItem('voted_' + password, voteType);
+    document.getElementById('instructor-popup-overlay').style.display = 'none';
+
+    // Возвращаем интерфейс к первому шагу для возможного следующего использования (не обязательно, но аккуратно)
+    document.getElementById('vote-question').style.display = 'block';
+    document.getElementById('dislike-reasons').style.display = 'none';
+}
     </script>
     <!-- Всплывающее окно оценки инструктора -->
-    <div id="instructor-popup-overlay" class="instructor-popup-overlay">
-        <div class="instructor-popup">
+<div id="instructor-popup-overlay" class="instructor-popup-overlay">
+    <div class="instructor-popup">
+        <!-- Шаг 1: Вопрос -->
+        <div id="vote-question">
             <h3>🤔 Понравился ли вам инструктор?</h3>
             <button class="vote-btn vote-like" onclick="submitVote('like')">👍 Да</button>
-            <button class="vote-btn vote-dislike" onclick="submitVote('dislike')">👎 Нет</button>
+            <button class="vote-btn vote-dislike" onclick="showDislikeReasons()">👎 Нет</button>
+        </div>
+
+        <!-- Шаг 2: Причины дизлайка (скрыт по умолчанию) -->
+        <div id="dislike-reasons" style="display:none;">
+            <h3>Уточните, пожалуйста, что не так:</h3>
+            <div style="text-align:left; margin-bottom:15px;">
+                <label><input type="checkbox" value="скучный" class="reason-checkbox"> Скучный</label><br>
+                <label><input type="checkbox" value="грубый" class="reason-checkbox"> Грубый</label><br>
+                <label><input type="checkbox" value="с ним страшно" class="reason-checkbox"> С ним страшно</label><br>
+                <label><input type="checkbox" value="с ним опасно" class="reason-checkbox"> С ним опасно</label><br>
+                <label><input type="checkbox" value="неприятный тип" class="reason-checkbox"> Неприятный тип</label>
+            </div>
+            <button class="vote-btn" style="background:#f44336; color:white;" onclick="submitDislikeWithReasons()">Отправить</button>
+            <button class="vote-btn" style="background:#ccc; color:#333;" onclick="goBackToVote()">Назад</button>
         </div>
     </div>
+</div>
 </body>
 </html>
