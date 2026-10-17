@@ -817,8 +817,8 @@ function sendNotice(text) {
                     let raw = String(row[c] || '').trim();
                     if (!raw) continue;
 
-                    // Проверка на знак "*"
-                    if (raw === '*') {
+                                        // Проверка на знак "*"
+                    if (raw.startsWith('*')) {
                         let name = csvData[0][c] ? String(csvData[0][c]).trim() : '';
                         if (!name) name = 'Папка ' + (allItems.length + 1);
                         const uniqueKey = 'PENDING:' + name + rowDate;
