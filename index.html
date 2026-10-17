@@ -486,7 +486,9 @@
         // Цены на услуги
         const SERVICE_PRICES = {
             'Фото': '1500 руб.',
+            'Видео GoPro': '1500 руб.',
             'GoPro': '1500 руб.',
+            'Видео с квадрокоптера': '2500 руб.',
             'ДРОН': '2500 руб.',
             'ДР ролик': 'Подарок при заказе Дрона',
             'инста 360': '1500 руб.'
@@ -817,7 +819,7 @@ function sendNotice(text) {
                     let raw = String(row[c] || '').trim();
                     if (!raw) continue;
 
-                                        // Проверка на знак "*"
+                    // Проверка на знак "*" (срабатывает, даже если после него есть текст)
                     if (raw.startsWith('*')) {
                         let name = csvData[0][c] ? String(csvData[0][c]).trim() : '';
                         if (!name) name = 'Папка ' + (allItems.length + 1);
@@ -846,10 +848,13 @@ function sendNotice(text) {
                     } else if (raw.startsWith('?')) {
                         isPreview = true;
                         raw = raw.substring(1).trim();
-                        if (!raw || !raw.startsWith('http')) continue;
-                        const extracted = extractPreviewLinks(raw);
-                        mainLink = extracted.mainLink;
-                        previewLinks = extracted.previews;
+                        // Если после ? есть ссылка - обрабатываем её
+                        if (raw.startsWith('http')) {
+                            const extracted = extractPreviewLinks(raw);
+                            mainLink = extracted.mainLink;
+                            previewLinks = extracted.previews;
+                        }
+                        // Если ссылки нет, мы просто не делаем continue, а идём дальше
                     } else if (raw.startsWith('%')) {
                         isNotMine = true;
                         raw = raw.substring(1).trim();
@@ -859,7 +864,10 @@ function sendNotice(text) {
                     let link = isPreview ? mainLink : raw;
                     let name = '';
 
-                    if (link.includes('|')) {
+                    if (isPreview && !link) {
+                        // Если это превью без ссылки, берём имя из заголовка столбца
+                        name = csvData[0][c] ? String(csvData[0][c]).trim() : '';
+                    } else if (link.includes('|')) {
                         const parts = link.split('|');
                         link = parts[0].trim();
                         name = parts[1] ? parts[1].trim() : (csvData[0][c] ? String(csvData[0][c]).trim() : '');
@@ -867,20 +875,10 @@ function sendNotice(text) {
                         name = csvData[0][c] ? String(csvData[0][c]).trim() : '';
                     }
 
-                    if (!link.startsWith('http')) continue;
-                    if (!name) name = 'Папка ' + (allItems.length + 1);
-
-                    const uniqueKey = (expired ? 'EXPIRED:' : (isPreview ? 'PREVIEW:' : (isNotMine ? 'NOTMINE:' : ''))) + name + rowDate + '|' + link;
-                    if (seenLinks.has(uniqueKey)) continue;
-                    seenLinks.add(uniqueKey);
-
-                    if (expired) {
-                        let alertText = `⏰ Истёкшая ссылка\nПароль: ${code}\nУслуга: ${name}`;
-                        if (rowDate) alertText += `\nДата сплава: ${rowDate}`;
-                        if (clientPhone) alertText += `\n📞 Клиент: ${clientPhone}`;
-                        alertText += `\nВремя: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
-                        sendNotice(alertText);
-                    }
+                    // Проверяем, что если это не превью, то ссылка должна быть http
+                    if (!isPreview && !link.startsWith('http')) continue;
+                    // Если это превью и ссылка есть, она тоже должна быть http
+                    if (isPreview && link && !link.startsWith('http')) continue;
 
                     allItems.push({
                         link: link,
